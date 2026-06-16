@@ -1,0 +1,5 @@
+# Secrets / local env – never commit real API keys
+.env
+.env.local
+.env.*.local
+*.key
