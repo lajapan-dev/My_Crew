@@ -2,7 +2,7 @@
   "mcpServers": {
     "mcp-kling": {
       "command": "npx",
-      "args": ["-y", "mcp-kling@latest"],
+      "args": ["-y", "mcp-kling@5.2.0"],
       "env": {
         "KLING_ACCESS_KEY": "${KLING_ACCESS_KEY}",
         "KLING_SECRET_KEY": "${KLING_SECRET_KEY}"
