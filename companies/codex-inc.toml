@@ -1,0 +1,9 @@
+# Codex株式会社 — 実行部隊その2
+name = "Codex株式会社"
+engine = "codex"
+command = "codex"            # `npm install -g @openai/codex` で導入
+model = ""                   # 空なら codex の既定モデル
+sandbox = "workspace-write"  # 作業コピー内だけ書ける。read-only / workspace-write のみ許可
+timeout_s = 1200
+# codex の設定上書き（-c key=value）。ネットワークは遮断する。
+extra_config = ["sandbox_workspace_write.network_access=false"]

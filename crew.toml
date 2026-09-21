@@ -1,0 +1,51 @@
+# AI社員組織 全体設定（正本）。会社ごとの設定は companies/、社員は employees/ にある。
+
+[crew]
+base_ref = "HEAD"            # 作業コピー（ワークツリー）を切る起点
+worktree_dir = ".worktrees"  # 作業コピー置き場（git管理外）
+runs_dir = "runs"            # 成果物（パッチ・ログ・レポート）置き場（git管理外）
+jobs_dir = "jobs"            # 案件票（人間が書く）
+db_path = "data/crew.db"     # 実績DB（git管理外）
+default_employee = "engineer"
+keep_worktree = false        # true にすると実行後も作業コピーを残す（デバッグ用）
+# 実行後に作業コピー内で走らせるテスト。空文字ならテストを実行しない。
+# 案件票の front-matter に test_command を書けば案件ごとに上書きできる。
+test_command = "python3 -m unittest discover -s tests -q"
+test_timeout_s = 600
+
+[dispatch]
+min_samples = 5              # この件数未満のエンジンがあれば必ず both（比較モード）
+score_margin = 0.10          # スコア差がこれ未満なら both
+force_both_on_high_risk = true
+use_gemini = true            # false にすると発注本部長を呼ばずルール判定のみ
+engines = ["claude", "codex"]  # 発注候補。両方無い環境では doctor が警告する
+
+[scoring]
+w_success = 0.5              # 成功率（人間が accept した率）
+w_tests = 0.3                # テスト通過率
+w_revisions = 0.2            # 平均修正回数（多いほど減点）
+revisions_cap = 3            # この回数で減点が頭打ち
+
+[policy]
+# 本番に影響しうるコマンドの禁止語（正規表現）。
+# エンジンが実行したコマンドに一致したら、その run は fail 扱いになる。
+denylist = [
+  "git\\s+push",
+  "git\\s+remote\\s+(add|set-url)",
+  "\\brm\\s+-rf\\s+/",
+  "\\bsudo\\b",
+  "docker\\s+(push|login)",
+  "\\bkubectl\\b",
+  "terraform\\s+(apply|destroy)",
+  "npm\\s+publish",
+  "\\btwine\\b",
+  "\\bgcloud\\b",
+  "\\baws\\s+\\w+",
+  "\\bheroku\\b",
+  "\\bvercel\\b",
+  "fly\\s+deploy",
+  "\\bssh\\s",
+  "\\bscp\\s",
+  "curl\\s+.*-X\\s*(POST|PUT|DELETE|PATCH)",
+  "DROP\\s+(TABLE|DATABASE)",
+]

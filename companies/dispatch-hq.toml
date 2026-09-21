@@ -1,0 +1,7 @@
+# 発注本部長 — Gemini CLI。判断だけを担当し、コードには触らない。
+name = "発注本部長"
+engine = "gemini"
+command = "gemini"           # `npm install -g @google/gemini-cli` で導入
+model = ""                   # 空なら gemini の既定（無料枠）
+approval_mode = "plan"       # 読み取り専用。変更不可
+timeout_s = 120

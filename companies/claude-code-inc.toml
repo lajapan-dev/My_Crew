@@ -1,0 +1,16 @@
+# Claude Code株式会社 — 実行部隊その1
+# 「どう起動するか」だけを書く。社員の中身は employees/ にある。
+name = "Claude Code株式会社"
+engine = "claude"
+command = "claude"           # PATH に無ければフルパスに変更
+model = "sonnet"             # 実行部隊は費用を抑えて sonnet。難案件は opus に変更可
+max_turns = 30               # 0 にすると --max-turns を渡さない（版によっては非対応）
+timeout_s = 1200
+permission_mode = "acceptEdits"
+# 社員が使える道具は employees/*.md の tools 行で決まる。ここは「会社として禁止する道具」。
+disallowed_tools = [
+  "Bash(git push*)", "Bash(git remote*)", "Bash(rm -rf*)", "Bash(sudo*)",
+  "Bash(curl*)", "Bash(wget*)", "Bash(ssh*)", "Bash(scp*)",
+  "Bash(docker*)", "Bash(kubectl*)", "Bash(npm publish*)",
+  "WebFetch", "WebSearch",
+]

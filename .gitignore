@@ -3,3 +3,13 @@
 .env.local
 .env.*.local
 *.key
+
+# crew: 実績DB・成果物・作業コピーはローカル専用（gitに入れない）
+data/*.db
+data/*.db-journal
+runs/
+.worktrees/
+
+# Python
+__pycache__/
+*.pyc
