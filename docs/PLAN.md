@@ -1,7 +1,7 @@
 # AI社員組織 CTO計画書 — 調査結果と最小構成（MVP）実装計画
 
 作成日: 2026-09-19
-状態: 計画提示（実装前）。本書の承認後に Phase 1 の実装へ進む。
+状態: Phase 1（CLI MVP）実装済み・実機確認済み。Phase 2 の最小ダッシュボード（`crew stats --html`）も同梱。
 
 ---
 
@@ -72,7 +72,7 @@ My_Crew/
 ├── CLAUDE.md                     ← この組織の憲法（役割・禁止事項・読込順）
 ├── docs/
 │   ├── PLAN.md                   ← 本書
-│   └── ARCHITECTURE.md           ← 実装後に更新する図解（Phase 1 で作成）
+│   └── ARCHITECTURE.md           ← 処理の流れと各部品の責務
 │
 ├── employees/                    ← 【共通の社員定義】エンジン非依存
 │   ├── README.md                 ← 社員ファイルの書き方
@@ -87,7 +87,9 @@ My_Crew/
 │
 ├── crew/                         ← 【CLI本体】Python 標準ライブラリのみ
 │   ├── __main__.py               ← `python -m crew <command>`
-│   ├── cli.py                    ← submit / dispatch / run / review / stats
+│   ├── cli.py                    ← init / doctor / submit / dispatch / run / review / apply / stats / list
+│   ├── runner.py                 ← 1回の実行パイプライン
+│   ├── report.py                 ← 成績表とダッシュボード
 │   ├── db.py                     ← SQLite スキーマと読み書き
 │   ├── scoring.py                ← 成功率などの集計とスコア式（純粋関数・テスト対象）
 │   ├── dispatcher.py             ← 発注本部長（ルール判定 + Gemini 判定）
@@ -184,7 +186,7 @@ score(engine, category) = 0.5 × success_rate
 
 ### Phase 0 — 調査と計画（本書）✔ 完了
 
-### Phase 1 — CLI最小MVP（次のセッションで実装）
+### Phase 1 — CLI最小MVP ✔ 完了（2026-09-21）
 成果物:
 - `crew init`（DB作成・フォルダ作成）
 - `crew submit "<案件タイトル>" --category bugfix --risk low --complexity S`（案件票を作りDBに登録）
@@ -203,7 +205,7 @@ score(engine, category) = 0.5 × success_rate
 - 並列実行・キュー → 案件数が増えてから
 - Slack/Chatwork 通知 → 通知先の設計が未定
 
-### Phase 2 — 最小ダッシュボード
+### Phase 2 — 最小ダッシュボード ✔ 最小版を同梱（表のみ。グラフは次段階）
 - `crew stats --html` で `runs/dashboard.html` を1枚生成（サーバー不要。既存の `http-server` で閲覧可）
 - 表示: エンジン別 success_rate / test_pass_rate / avg_revisions、直近の発注判断一覧、Gemini がルールに逆らった判断とその結果
 - 目安: 半セッション
@@ -225,3 +227,18 @@ score(engine, category) = 0.5 × success_rate
 | 実績が少ない段階での誤判断 | n < 5 は強制 `both`。人間の accept/reject が唯一の成功定義 |
 | AIが本番に触る事故 | ワークツリー + サンドボックス + 禁止語検査 + push は人間のみ、の4重 |
 | 二重発注 | `dispatch_decisions` に job_id の一意制約。`both` 以外で2 run は作れない |
+
+---
+
+## 9. 実装後の実機確認記録（2026-09-21）
+
+| 確認 | 結果 |
+|---|---|
+| 単体・結合テスト（unittest 38件） | 全件成功 |
+| 模擬エンジンでの全工程（submit→dispatch→run→review→apply→stats） | 成功 |
+| Claude Code株式会社の実機実行（docs 案件、engineer 社員） | 成功。仕様どおり1ファイル2行のパッチ、テスト38/38、入力103,743トークン・約$0.16、13秒 |
+| 禁止語（git push）を含む run | 自動で fail + system reject。採用不可を確認 |
+| Codex株式会社・発注本部長の実機実行 | **未確認**（この環境に鍵が無い）。CLI のフラグ存在は実機で確認済み |
+
+Codex と Gemini を初めて動かすときは、`python3 -m crew doctor` で OK になってから、
+`--risk low` の小さな案件で `--engine codex` / 発注本部長を試すこと。

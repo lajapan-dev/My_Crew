@@ -51,7 +51,11 @@ def execute_run(root: Path, settings: dict, companies: dict, conn, job: Job,
         system_text, user_text = build_prompt(employee, job)
         (run_dir / "prompt.txt").write_text(system_text + "\n\n" + user_text, encoding="utf-8")
 
-        result = engine.run(employee, job, wt, run_dir)
+        try:
+            result = engine.run(employee, job, wt, run_dir)
+        except Exception as ex:  # エンジン側の想定外エラーでも run を「実行中」のまま残さない
+            from .engines.base import RunResult
+            result = RunResult(outcome="fail", exit_code=None, error=f"engine exception: {type(ex).__name__}: {ex}")
         (run_dir / "engine.log").write_text(result.raw_log or "", encoding="utf-8")
         if result.stderr:
             (run_dir / "stderr.log").write_text(result.stderr, encoding="utf-8")
