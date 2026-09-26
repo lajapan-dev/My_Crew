@@ -240,5 +240,7 @@ score(engine, category) = 0.5 × success_rate
 | 禁止語（git push）を含む run | 自動で fail + system reject。採用不可を確認 |
 | Codex株式会社・発注本部長の実機実行 | **未確認**（この環境に鍵が無い）。CLI のフラグ存在は実機で確認済み |
 
+Codex CLI と Gemini CLI は `package.json` に固定バージョンで同梱し、クラウド環境では
+`.claude/hooks/session-start.sh` が自動導入する（2026-09-26 追加）。
 Codex と Gemini を初めて動かすときは、`python3 -m crew doctor` で OK になってから、
 `--risk low` の小さな案件で `--engine codex` / 発注本部長を試すこと。

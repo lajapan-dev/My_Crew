@@ -3,13 +3,12 @@ from __future__ import annotations
 
 import json
 import os
-import shutil
 import subprocess
 import time
 from dataclasses import dataclass, field
 from pathlib import Path
 
-from ..config import Employee, Job
+from ..config import Employee, Job, resolve_command
 
 SAFETY_RULES = """【安全規則（必読・最優先）】
 - あなたは隔離された作業コピー（git worktree）の中で作業しています。ここ以外のファイルには触れません。
@@ -59,13 +58,17 @@ class Engine:
     def display_name(self) -> str:
         return str(self.cfg.get("name") or self.name)
 
-    def command(self) -> str:
+    def raw_command(self) -> str:
         return str(self.cfg.get("command") or self.name)
+
+    def command(self) -> str:
+        """実行に使うコマンドの実体（PATH かリポジトリ同梱の node_modules/.bin）。"""
+        return resolve_command(self.settings.get("_root"), self.raw_command()) or self.raw_command()
 
     def available(self) -> tuple[bool, str]:
         """(使えるか, 理由)。鍵やログインの有無もここで見る。"""
-        if shutil.which(self.command()) is None:
-            return False, f"コマンド '{self.command()}' が見つかりません"
+        if resolve_command(self.settings.get("_root"), self.raw_command()) is None:
+            return False, f"コマンド '{self.raw_command()}' が見つかりません（npm install で同梱版が入ります）"
         return True, "ok"
 
     def run(self, employee: Employee, job: Job, workdir: Path, run_dir: Path) -> RunResult:  # pragma: no cover

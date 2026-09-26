@@ -1,0 +1,14 @@
+{
+  "name": "my-crew",
+  "private": true,
+  "description": "AI社員組織: Codex CLI と Gemini CLI をリポジトリ内に固定バージョンで同梱する（npm install で入る）",
+  "devDependencies": {
+    "@google/gemini-cli": "0.60.0",
+    "@openai/codex": "0.155.1"
+  },
+  "scripts": {
+    "setup": "python3 -m crew init",
+    "doctor": "python3 -m crew doctor",
+    "test": "python3 -m unittest discover -s tests -q"
+  }
+}

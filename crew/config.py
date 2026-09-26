@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import os
 import re
+import shutil
 import tomllib
 from dataclasses import dataclass, field
 from datetime import datetime
@@ -86,7 +87,23 @@ def load_settings(root: Path) -> dict:
     if path.exists():
         with path.open("rb") as f:
             data = tomllib.load(f)
-    return _merge(DEFAULT_SETTINGS, data)
+    merged = _merge(DEFAULT_SETTINGS, data)
+    merged["_root"] = str(root)
+    return merged
+
+
+def resolve_command(root: Path | str | None, cmd: str) -> str | None:
+    """コマンドの実体を探す。PATH → リポジトリ同梱の node_modules/.bin の順。無ければ None。"""
+    if os.sep in cmd:
+        return cmd if Path(cmd).exists() else None
+    found = shutil.which(cmd)
+    if found:
+        return found
+    if root:
+        local = Path(root) / "node_modules" / ".bin" / cmd
+        if local.exists():
+            return str(local)
+    return None
 
 
 def load_companies(root: Path) -> dict[str, dict]:

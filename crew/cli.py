@@ -69,7 +69,7 @@ def cmd_doctor(ctx: Ctx, a) -> int:
         _p(f"  {'OK' if ok else 'NG'} {name} (engine={e}): {why}")
     _p("  OK 模擬エンジン (engine=mock): 鍵不要で流れを試せる")
     g = ctx.companies.get("gemini", {"command": "gemini"})
-    ok, why = gemini_available(g)
+    ok, why = gemini_available(g, ctx.root)
     _p(f"[発注本部長] {'OK' if ok else 'NG'} {g.get('name', '発注本部長')} (gemini): {why}")
     keys = [k for k in ("ANTHROPIC_API_KEY", "OPENAI_API_KEY", "GEMINI_API_KEY", "GOOGLE_API_KEY") if os.environ.get(k)]
     _p(f"[鍵] 読めている環境変数: {', '.join(keys) if keys else 'なし'}（値は表示しない）")

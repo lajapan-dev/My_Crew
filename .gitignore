@@ -13,3 +13,6 @@ runs/
 # Python
 __pycache__/
 *.pyc
+
+# Node（同梱CLIの実体。package-lock.json は git 管理する）
+node_modules/

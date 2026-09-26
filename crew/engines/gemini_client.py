@@ -4,15 +4,16 @@ from __future__ import annotations
 import json
 import os
 import re
-import shutil
 import subprocess
 from pathlib import Path
 
+from ..config import resolve_command
 
-def gemini_available(cfg: dict) -> tuple[bool, str]:
+
+def gemini_available(cfg: dict, root: Path | str | None = None) -> tuple[bool, str]:
     cmd = str(cfg.get("command") or "gemini")
-    if shutil.which(cmd) is None:
-        return False, f"コマンド '{cmd}' が見つかりません（npm install -g @google/gemini-cli）"
+    if resolve_command(root, cmd) is None:
+        return False, f"コマンド '{cmd}' が見つかりません（npm install で同梱版が入ります）"
     if os.environ.get("GEMINI_API_KEY") or os.environ.get("GOOGLE_API_KEY") \
             or (Path.home() / ".gemini" / "oauth_creds.json").exists():
         return True, "ok"
@@ -21,7 +22,7 @@ def gemini_available(cfg: dict) -> tuple[bool, str]:
 
 def ask_gemini(cfg: dict, prompt: str, cwd: Path) -> tuple[str | None, str]:
     """(応答テキスト, 生出力)。失敗時は (None, エラー文)。"""
-    cmd = str(cfg.get("command") or "gemini")
+    cmd = resolve_command(cwd, str(cfg.get("command") or "gemini")) or str(cfg.get("command") or "gemini")
     argv = [cmd, "-p", prompt, "--output-format", "json", "--approval-mode", "plan"]
     if cfg.get("model"):
         argv += ["-m", str(cfg["model"])]

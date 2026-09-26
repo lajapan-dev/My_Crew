@@ -105,7 +105,7 @@ def decide(conn, settings: dict, companies: dict, job: Job, root: Path,
         outcome.note = "固定ルールで決まるため発注本部長は呼ばない（無料枠の節約）"
         return outcome
     gcfg = companies.get("gemini", {"engine": "gemini", "command": "gemini"})
-    ok, why = gemini_available(gcfg)
+    ok, why = gemini_available(gcfg, root)
     if not ok:
         outcome.note = f"発注本部長を呼べないためルール判定: {why}"
         return outcome
