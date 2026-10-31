@@ -21,7 +21,11 @@
   .clock{font-size:28px;font-weight:800;font-variant-numeric:tabular-nums;letter-spacing:.02em}
   .pill{border:1px solid #2b4a3f;background:#0c231d;color:#a7f3d0;border-radius:999px;padding:4px 12px;font-weight:700}
   .pill b{font-size:18px;color:#6ee7b7;margin:0 3px}
-  .brand{color:var(--sub);font-size:12px}
+  .live.replay{color:var(--owner)}
+  .live.replay i{background:var(--owner);box-shadow:0 0 10px var(--owner)}
+  .title{display:flex;flex-direction:column;line-height:1.2}
+  .title b{font-size:13px;letter-spacing:.04em}
+  .brand{color:var(--sub);font-size:11px}
   .btn{border:1px solid var(--line);background:var(--panel);color:var(--text);border-radius:10px;padding:6px 12px;font:inherit;font-size:12px;cursor:pointer}
   .btn:hover{border-color:var(--sanbo)}
   .stats{display:flex;gap:8px;margin-left:auto;flex-wrap:wrap}
@@ -40,7 +44,8 @@
   .kpi .v span{font-size:12px;color:var(--sub);font-weight:600;margin-left:4px}
   .bar{height:6px;border-radius:6px;background:#1b2642;overflow:hidden}
   .bar i{display:block;height:100%;border-radius:6px;background:linear-gradient(90deg,var(--sanbo),var(--good));transition:width 1s}
-  .demo{grid-column:1/-1;font-size:11px;color:#fca5a5;display:flex;align-items:center;gap:6px}
+  .demo{grid-column:1/-1;font-size:11px;color:#fcd34d;display:flex;align-items:center;gap:6px}
+  .demo:empty{display:none}
 
   /* 舞台 */
   .stage{position:relative;padding:16px 18px 18px}
@@ -108,6 +113,7 @@
   .ticker .t{color:var(--sub);margin-right:6px;font-variant-numeric:tabular-nums}
   .ticker .who{font-weight:700}
   .ticker .what{color:#b6c2e2;margin-left:6px}
+  .credit{display:flex;justify-content:space-between;flex-wrap:wrap;gap:4px 12px;padding:6px 18px 10px;font-size:10.5px;color:#5f6d8f;background:#080d1b}
   .ticker .lab{font-size:10px;border-radius:5px;padding:1px 5px;margin-left:6px;font-weight:800}
   .lab.esc{background:#4c1d24;color:#fda4af}.lab.rej{background:#1e293b;color:#94a3b8}.lab.ok{background:#052e1f;color:#6ee7b7}
 
@@ -144,10 +150,10 @@
 <body>
 <div class="wrap" id="wrap">
   <header class="top">
-    <div class="live"><i></i>LIVE</div>
+    <div class="live" id="live"><i></i><span id="live-t">LIVE</span></div>
     <div class="clock" id="clock">--:--:--</div>
     <div class="pill">稼働<b id="days">0</b>日目</div>
-    <div class="brand" id="brand"></div>
+    <div class="title"><b id="product"></b><span class="brand" id="brand"></span></div>
     <button class="btn" id="pause">⏸ 動きを止める</button>
     <div class="stats">
       <div class="stat"><small>今日の出動</small><b id="s-dispatch">0</b></div>
@@ -173,6 +179,7 @@
   </main>
 
   <footer class="ticker" id="ticker"></footer>
+  <div class="credit"><span id="credit-l"></span><span id="credit-r"></span></div>
 </div>
 
 <script>
@@ -180,10 +187,16 @@
    設定（お客さまごとに作り替えるときは、ここだけを書き換える）
    ===================================================================== */
 const CONFIG = {
+  product: "AI組織ダッシュボード",
+  version: "v1.0 納品版（2026-10-31）",
+  provider: "提供：株式会社MyUniBith",
   brand: "株式会社MyUniBith × 合同会社lajapan",
+  // 動きの出どころ：replay＝よくある仕事の流れを再現して見せる／live＝実際の記録を流す（実データ接続後）
+  activity: "replay",
+  // 目標の数字が見本値なら true。本物の数字に入れ替えたら false にする（注意書きが消える）
+  numbersAreSample: true,
   startDate: "2026-09-15",              // 稼働開始日（「稼働○日目」の起点）
   owner: { id:"owner", name:"本間 洋平", tag:"社長・最終決定", desc:"判断・営業・登壇・監修だけに集中" },
-  demoNote: "デモ表示：数字と動きは見本です（実データとはまだつないでいません）",
   kpis: [
     { label:"AI事業 今月の売上", value:62, unit:"万円", goal:100, goalText:"目標 100万円" },
     { label:"AI 新規問い合わせ", value:6, unit:"件", goal:10, goalText:"目標 10件" },
@@ -314,7 +327,14 @@ function makeNode(o, color, cls, big){
 }
 
 function build(){
+  $("#product").textContent = CONFIG.product;
   $("#brand").textContent = CONFIG.brand;
+  $("#credit-l").textContent = `${CONFIG.product} ${CONFIG.version}`;
+  $("#credit-r").textContent = CONFIG.provider;
+  if (CONFIG.activity !== "live"){
+    $("#live").classList.add("replay"); $("#live-t").textContent = "再現モード";
+    $("#live").title = "よくある仕事の流れを再現して表示しています";
+  }
   const d = Math.floor((Date.now() - new Date(CONFIG.startDate)) / 864e5) + 1;
   $("#days").textContent = Math.max(1,d);
 
@@ -326,7 +346,10 @@ function build(){
       `<div class="kpi"><small>${x.label}</small><div class="v">${x.value}<span>${x.unit}</span></div>
        <div class="bar"><i style="width:${pct}%"></i></div><small>${x.goalText}</small></div>`);
   });
-  k.insertAdjacentHTML("beforeend", `<div class="demo">● ${CONFIG.demoNote}</div>`);
+  const notes = [];
+  if (CONFIG.numbersAreSample) notes.push("目標の数字は見本値です");
+  if (CONFIG.activity !== "live") notes.push("動きは、よくある仕事の流れを再現したものです");
+  k.insertAdjacentHTML("beforeend", `<div class="demo">${notes.length ? "● " + notes.join("／") : ""}</div>`);
 
   // 代表
   $("#ownerbox").appendChild(makeNode(CONFIG.owner, "#fbbf24", "owner", true));
@@ -533,7 +556,17 @@ async function loop(){
 }
 
 /* ---------- 時計・一時停止 ---------- */
-setInterval(()=>{ $("#clock").textContent = new Date().toTimeString().slice(0,8); }, 500);
+let today = new Date().getDate();
+setInterval(()=>{
+  const now = new Date();
+  $("#clock").textContent = now.toTimeString().slice(0,8);
+  if (now.getDate() !== today){            // 日付が変わったら「今日」の数字をリセット
+    today = now.getDate(); HOURS.fill(0); drawSpark();
+    ["s-dispatch","s-auto","s-esc","s-mem"].forEach(id=> $("#"+id).textContent = 0);
+    const d = Math.floor((now - new Date(CONFIG.startDate)) / 864e5) + 1;
+    $("#days").textContent = Math.max(1,d);
+  }
+}, 500);
 $("#pause").onclick = ()=>{
   paused = !paused;
   $("#wrap").classList.toggle("paused", paused);
