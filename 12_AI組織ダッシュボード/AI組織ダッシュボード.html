@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AI組織ダッシュボード</title>
+<style>
+  :root{
+    --bg:#070b16; --panel:#0e1527; --panel2:#121b33; --line:#22304f; --text:#e6ecff; --sub:#8a97b8;
+    --owner:#fbbf24; --sanbo:#38bdf8; --migi:#22c55e; --warn:#fb7185; --good:#34d399; --gold:#fcd34d;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{background:var(--bg);color:var(--text);font-family:"Hiragino Sans","Hiragino Kaku Gothic ProN","Noto Sans JP","Yu Gothic",Meiryo,sans-serif;font-size:14px}
+  body{background:radial-gradient(1200px 700px at 30% 10%,#0f1c3a 0%,transparent 60%),radial-gradient(900px 600px at 90% 80%,#0b2a24 0%,transparent 60%),var(--bg);min-height:100vh;padding:14px}
+  .wrap{max-width:1500px;margin:0 auto;border:1px solid var(--line);border-radius:22px;background:rgba(8,13,27,.75);overflow:hidden;box-shadow:0 20px 80px rgba(0,0,0,.5)}
+
+  /* 上の帯 */
+  .top{display:flex;flex-wrap:wrap;align-items:center;gap:10px 16px;padding:14px 18px;border-bottom:1px solid var(--line)}
+  .live{display:flex;align-items:center;gap:8px;font-weight:800;letter-spacing:.08em;color:var(--warn);font-size:12px}
+  .live i{width:9px;height:9px;border-radius:50%;background:var(--warn);box-shadow:0 0 10px var(--warn);animation:blink 1.4s infinite}
+  .clock{font-size:28px;font-weight:800;font-variant-numeric:tabular-nums;letter-spacing:.02em}
+  .pill{border:1px solid #2b4a3f;background:#0c231d;color:#a7f3d0;border-radius:999px;padding:4px 12px;font-weight:700}
+  .pill b{font-size:18px;color:#6ee7b7;margin:0 3px}
+  .brand{color:var(--sub);font-size:12px}
+  .btn{border:1px solid var(--line);background:var(--panel);color:var(--text);border-radius:10px;padding:6px 12px;font:inherit;font-size:12px;cursor:pointer}
+  .btn:hover{border-color:var(--sanbo)}
+  .stats{display:flex;gap:8px;margin-left:auto;flex-wrap:wrap}
+  .stat{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:6px 12px;min-width:92px}
+  .stat small{display:block;color:var(--sub);font-size:10px}
+  .stat b{font-size:20px;font-variant-numeric:tabular-nums}
+  .stat.warn b{color:var(--warn)}
+  .spark{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:6px 10px}
+  .spark small{color:var(--sub);font-size:10px;display:block}
+
+  /* 数字の帯 */
+  .kpis{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;padding:12px 18px;border-bottom:1px solid var(--line)}
+  .kpi{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:10px 12px}
+  .kpi small{color:var(--sub);font-size:11px}
+  .kpi .v{font-size:22px;font-weight:800;margin:2px 0 6px;font-variant-numeric:tabular-nums}
+  .kpi .v span{font-size:12px;color:var(--sub);font-weight:600;margin-left:4px}
+  .bar{height:6px;border-radius:6px;background:#1b2642;overflow:hidden}
+  .bar i{display:block;height:100%;border-radius:6px;background:linear-gradient(90deg,var(--sanbo),var(--good));transition:width 1s}
+  .demo{grid-column:1/-1;font-size:11px;color:#fca5a5;display:flex;align-items:center;gap:6px}
+
+  /* 舞台 */
+  .stage{position:relative;padding:16px 18px 18px}
+  #wires{position:absolute;left:0;top:0;pointer-events:none;z-index:1;overflow:visible}
+  .row1{display:grid;grid-template-columns:2.1fr 1fr;gap:16px;margin-bottom:16px;position:relative;z-index:2}
+  .ownerbox{display:flex;justify-content:center;align-items:center;min-height:150px}
+  .teams{display:grid;grid-template-columns:2.1fr 1fr;gap:16px;position:relative;z-index:2}
+  .team{border:1px solid var(--line);border-radius:18px;padding:14px;background:linear-gradient(180deg,rgba(18,27,51,.85),rgba(12,18,34,.85))}
+  .team h2{font-size:16px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  .team h2 em{font-style:normal;color:var(--sub);font-size:12px;font-weight:500}
+  .tools{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0 4px}
+  .tools span{font-size:10px;border:1px solid var(--line);border-radius:6px;padding:2px 7px;color:var(--sub);background:#0b1224}
+  .ceo-row{display:flex;justify-content:center;margin:10px 0 18px}
+  .depts{display:grid;grid-template-columns:repeat(5,1fr);gap:10px}
+  .dept-h{display:flex;justify-content:space-between;align-items:center;background:#0b1224;border:1px solid var(--line);border-radius:10px;padding:6px 9px;font-weight:700;font-size:12px;margin-bottom:8px}
+  .dept-h small{color:var(--sub);font-weight:600}
+  .dept .staff{display:flex;flex-direction:column;gap:8px}
+
+  /* カード */
+  .node{position:relative;display:flex;gap:9px;align-items:center;background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:8px 9px;transition:box-shadow .3s,border-color .3s,transform .3s}
+  .node .av{flex:0 0 auto}
+  .node .nm{font-weight:700;font-size:12.5px;line-height:1.25}
+  .node .ds{color:var(--sub);font-size:10.5px;line-height:1.3}
+  .node .meta{display:flex;gap:6px;align-items:center;margin-top:3px;font-size:10px;color:var(--sub)}
+  .lv{border:1px solid #33456f;border-radius:6px;padding:0 5px;color:#c7d2fe;font-weight:700}
+  .dot{width:7px;height:7px;border-radius:50%;background:#475569;display:inline-block}
+  .node.busy{border-color:var(--c,var(--sanbo));box-shadow:0 0 0 1px var(--c,var(--sanbo)),0 0 22px -2px var(--c,var(--sanbo))}
+  .node.busy .dot{background:var(--c,var(--sanbo));box-shadow:0 0 8px var(--c,var(--sanbo))}
+  .node.done{border-color:var(--good);box-shadow:0 0 18px -4px var(--good)}
+  .node.done .dot{background:var(--good)}
+  .node.big{padding:12px 16px;border-radius:16px;min-width:230px}
+  .node.big .nm{font-size:18px}
+  .node.big .tag{font-size:10px;color:var(--c);letter-spacing:.06em;font-weight:700}
+  .node.owner{--c:var(--owner);border-color:#5b4a1a;background:linear-gradient(180deg,#1d1a10,#14120c)}
+  .node.ceo-sanbo{--c:var(--sanbo);border-color:#1f4d66}
+  .node.ceo-migi{--c:var(--migi);border-color:#1d4d33}
+  .badge{position:absolute;top:-9px;right:-9px;background:var(--warn);color:#fff;font-size:10px;font-weight:800;border-radius:999px;padding:2px 7px;box-shadow:0 0 12px var(--warn);display:none}
+  .badge.on{display:block}
+  .worker{display:flex;justify-content:center;margin-bottom:14px}
+
+  /* 会社の記憶 */
+  .memory{border:1px solid var(--line);border-radius:18px;background:radial-gradient(circle at 50% 55%,#13213f 0%,#0b1224 70%);padding:10px 12px;position:relative;min-height:150px}
+  .memory h3{font-size:13px;display:flex;justify-content:space-between;align-items:baseline}
+  .memory h3 small{color:var(--sub);font-size:10px;font-weight:500}
+  #memsvg{width:100%;height:auto;display:block}
+  .star{animation:twinkle var(--d,3s) ease-in-out infinite;animation-delay:var(--dl,0s)}
+  .mnode circle.core{transition:r .3s,fill .3s}
+  .mnode text{font-size:9px;fill:#9fb0d6}
+  .mnode.on circle.core{fill:var(--gold)}
+  .mnode.on text{fill:#fff}
+  .mlink{stroke:#26365c;stroke-width:1}
+  .mlink.on{stroke:var(--gold);stroke-width:2;filter:drop-shadow(0 0 4px var(--gold))}
+
+  /* 吹き出し */
+  .bubble{position:absolute;z-index:5;transform:translate(-50%,-100%);background:#f8fafc;color:#0f172a;font-size:11.5px;font-weight:700;border-radius:10px;padding:6px 10px;max-width:220px;box-shadow:0 8px 24px rgba(0,0,0,.4);pointer-events:none;animation:pop .25s ease-out;line-height:1.35}
+  .bubble:after{content:"";position:absolute;left:50%;bottom:-6px;margin-left:-6px;border:6px solid transparent;border-bottom:0;border-top-color:#f8fafc}
+  .bubble.esc{background:#ffe4e6}.bubble.esc:after{border-top-color:#ffe4e6}
+  .bubble.rej{background:#e2e8f0;color:#475569}.bubble.rej:after{border-top-color:#e2e8f0}
+  .bubble.ok{background:#dcfce7}.bubble.ok:after{border-top-color:#dcfce7}
+  .bubble.out{opacity:0;transition:opacity .4s}
+
+  /* 下の流れる記録 */
+  .ticker{display:flex;gap:26px;padding:10px 18px;border-top:1px solid var(--line);overflow:hidden;white-space:nowrap;font-size:12px;background:#080d1b}
+  .ticker div{flex:0 0 auto;animation:slidein .5s ease-out}
+  .ticker .t{color:var(--sub);margin-right:6px;font-variant-numeric:tabular-nums}
+  .ticker .who{font-weight:700}
+  .ticker .what{color:#b6c2e2;margin-left:6px}
+  .ticker .lab{font-size:10px;border-radius:5px;padding:1px 5px;margin-left:6px;font-weight:800}
+  .lab.esc{background:#4c1d24;color:#fda4af}.lab.rej{background:#1e293b;color:#94a3b8}.lab.ok{background:#052e1f;color:#6ee7b7}
+
+  @keyframes blink{50%{opacity:.25}}
+  @keyframes twinkle{0%,100%{opacity:.15}50%{opacity:.9}}
+  @keyframes pop{from{transform:translate(-50%,-80%) scale(.8);opacity:0}to{transform:translate(-50%,-100%) scale(1);opacity:1}}
+  @keyframes slidein{from{transform:translateX(-30px);opacity:0}to{transform:none;opacity:1}}
+  @keyframes eye{0%,92%,100%{transform:scaleY(1)}95%{transform:scaleY(.1)}}
+  .eye{transform-box:fill-box;transform-origin:center;animation:eye 4s infinite}
+  .paused *{animation-play-state:paused!important}
+
+  @media (max-width:1100px){
+    .kpis{grid-template-columns:repeat(2,1fr)}
+    .row1,.teams{grid-template-columns:1fr}
+    .depts{grid-template-columns:repeat(2,1fr)}
+    .stats{margin-left:0}
+  }
+  @media (max-width:520px){
+    body{padding:6px}
+    .clock{font-size:22px}
+    .stat{min-width:0;padding:5px 9px}.stat b{font-size:16px}
+    .kpis{grid-template-columns:repeat(3,1fr);gap:6px;padding:10px}
+    .kpi{padding:7px 8px}.kpi .v{font-size:16px}.kpi small{font-size:9.5px}
+    .stage{display:flex;flex-direction:column;gap:14px}
+    .row1{display:contents}
+    .ownerbox{order:1;min-height:0}
+    .teams{order:2}
+    .memory{order:3}
+    .depts{grid-template-columns:1fr 1fr;gap:8px}
+    .node .ds{display:none}
+  }
+</style>
+</head>
+<body>
+<div class="wrap" id="wrap">
+  <header class="top">
+    <div class="live"><i></i>LIVE</div>
+    <div class="clock" id="clock">--:--:--</div>
+    <div class="pill">稼働<b id="days">0</b>日目</div>
+    <div class="brand" id="brand"></div>
+    <button class="btn" id="pause">⏸ 動きを止める</button>
+    <div class="stats">
+      <div class="stat"><small>今日の出動</small><b id="s-dispatch">0</b></div>
+      <div class="stat"><small>AIで片付けた</small><b id="s-auto">0</b></div>
+      <div class="stat warn"><small>本人に回した</small><b id="s-esc">0</b></div>
+      <div class="stat"><small>記憶を読んだ</small><b id="s-mem">0</b></div>
+      <div class="spark"><small>24時間の出動</small><svg id="spark" width="150" height="30"></svg></div>
+    </div>
+  </header>
+
+  <section class="kpis" id="kpis"></section>
+
+  <main class="stage" id="stage">
+    <svg id="wires"></svg>
+    <div class="row1">
+      <div class="ownerbox" id="ownerbox"></div>
+      <div class="memory">
+        <h3>会社の記憶 <small>読む順：憲法 → 全体像 → 必要な部屋だけ</small></h3>
+        <svg id="memsvg" viewBox="0 0 320 170"></svg>
+      </div>
+    </div>
+    <div class="teams" id="teams"></div>
+  </main>
+
+  <footer class="ticker" id="ticker"></footer>
+</div>
+
+<script>
+/* =====================================================================
+   設定（お客さまごとに作り替えるときは、ここだけを書き換える）
+   ===================================================================== */
+const CONFIG = {
+  brand: "株式会社MyUniBith × 合同会社lajapan",
+  startDate: "2026-09-15",              // 稼働開始日（「稼働○日目」の起点）
+  owner: { id:"owner", name:"本間 洋平", tag:"社長・最終決定", desc:"判断・営業・登壇・監修だけに集中" },
+  demoNote: "デモ表示：数字と動きは見本です（実データとはまだつないでいません）",
+  kpis: [
+    { label:"AI事業 今月の売上", value:62, unit:"万円", goal:100, goalText:"目標 100万円" },
+    { label:"AI 新規問い合わせ", value:6, unit:"件", goal:10, goalText:"目標 10件" },
+    { label:"Shopee 粗利率（3か国）", value:18.4, unit:"%", goal:25, goalText:"改善中" },
+    { label:"返信テンプレ整備", value:2, unit:"/ 5", goal:5, goalText:"今月の基準 5パターン" },
+    { label:"右腕AI 自動回答率", value:84, unit:"%", goal:100, goalText:"本人に回す分を除く" },
+  ],
+  teams: [
+    { id:"sanbo", name:"経営参謀", engine:"Claude Code", color:"#38bdf8", cls:"ceo-sanbo",
+      ceoDesc:"判断基準に沿って仕事を振り分ける",
+      tools:["Gmail","スプレッドシート","カレンダー","Chatwork","会社の記憶"],
+      depts:[
+        { name:"☀ 朝ブリーフ", staff:[
+          { id:"brief", name:"朝ブリーフ係", desc:"優先3つ・捨てる3つ", lv:9 },
+          { id:"memo",  name:"雑メモ整理係", desc:"殴り書きをtodoへ", lv:6 } ]},
+        { name:"🎓 AI研修", staff:[
+          { id:"teian",  name:"提案書係", desc:"研修提案の下書き", lv:5 },
+          { id:"shiryo", name:"研修資料係", desc:"過去回の再利用", lv:7 },
+          { id:"news",   name:"AIニュース係", desc:"最新情報を3行で", lv:8 },
+          { id:"book",   name:"書籍係", desc:"章立て・構成案", lv:3 } ]},
+        { name:"🛒 Shopee", staff:[
+          { id:"arari",    name:"粗利分析係", desc:"SKU別の実質粗利", lv:6 },
+          { id:"toiawase", name:"問い合わせ係", desc:"返信の下書き", lv:7 },
+          { id:"trend",    name:"トレンド係", desc:"主力3カテゴリ定点", lv:4 },
+          { id:"camp",     name:"キャンペーン係", desc:"11.11 / 12.12 準備", lv:5 } ]},
+        { name:"⚙ 仕組み化", staff:[
+          { id:"tmpl",   name:"テンプレ係", desc:"繰り返し作業を型に", lv:4 },
+          { id:"manual", name:"マニュアル係", desc:"自分以外でも回せる手順", lv:2 } ]},
+        { name:"✓ 品質・ガード", staff:[
+          { id:"qc",   name:"品質チェック係", desc:"出す前の最終確認", lv:8 },
+          { id:"dont", name:"DON'Tチェック係", desc:"今期やらないことを止める", lv:6 } ]},
+      ]},
+    { id:"migi", name:"右腕AI", engine:"LINE公式アカウント", color:"#22c55e", cls:"ceo-migi",
+      ceoDesc:"社員の質問に、代表の代わりに即答",
+      tools:["LINE","Googleドキュメント","応答ログ"],
+      worker:{ id:"staff", name:"社員", desc:"LINEで質問してくる" },
+      depts:[
+        { name:"💬 社員対応", staff:[
+          { id:"kaito",     name:"回答係", desc:"応答ルールの範囲で即答", lv:9 },
+          { id:"hantei",    name:"本人に回す判定係", desc:"お金・クレーム・契約は代表へ", lv:7 },
+          { id:"furikaeri", name:"振り返り係", desc:"よく出る質問を手本に", lv:4 } ]},
+      ]},
+  ],
+  // 会社の記憶（ワークスペースの部屋）
+  rooms: [
+    ["01","土台"],["02","管理対象"],["03","外部データ"],["04","調査"],["05","判断記録"],["06","作業記録"],
+    ["07","雑メモ"],["08","todo"],["09","テンプレ"],["10","中間まとめ"],["11","右腕AI"]
+  ],
+  // 仕事の流れの見本。[誰から, 誰へ, 吹き出し, 種類, 読む部屋]
+  //  種類：order=依頼 / ok=AIで完了 / esc=本人に回す / rej=今期やらない
+  scenarios: [
+    [["owner","sanbo","今日どうする？","order"],
+     ["sanbo","brief","優先3つと捨てる3つを出して","order",["08","01"]],
+     ["brief","sanbo","優先3・捨てる3・時間配分できました","ok"],
+     ["sanbo","owner","今日の最優先は来週の研修準備です","ok"]],
+    [["sanbo","teian","B社向け研修提案の下書きを","order",["02","01"]],
+     ["teian","qc","チェックお願いします","order"],
+     ["qc","sanbo","助成金の記載OK","ok"],
+     ["sanbo","owner","提案書の最終確認をお願いします【要本人判断】","esc"]],
+    [["sanbo","news","今日のAI最新情報を3行で","order",["03"]],
+     ["news","sanbo","要点3つ＋研修ネタ1つ【コンテンツ資産化】","ok"]],
+    [["staff","migi","見積書のひな形はどこですか？","order"],
+     ["migi","kaito","答えてあげて","order",["11"]],
+     ["kaito","staff","共有フォルダの「見積」にあります（自動回答）","ok"]],
+    [["sanbo","arari","SG売れ筋の粗利を見直して","order",["03","02"]],
+     ["arari","sanbo","送料見直しで +2.1pt の余地あり","ok"],
+     ["sanbo","owner","仕入交渉の材料がそろいました","ok"]],
+    [["sanbo","dont","Lazadaにも出す？","order",["01"]],
+     ["dont","sanbo","今期はやらない【捨てる】","rej"]],
+    [["sanbo","toiawase","配送遅延の返信テンプレを","order",["02","09"]],
+     ["toiawase","qc","確認お願いします","order"],
+     ["qc","sanbo","テンプレ 3/5 完成【仕組み化候補】","ok"]],
+    [["staff","migi","お客様から返金の相談が…","order"],
+     ["migi","hantei","本人に回す？","order",["11","01"]],
+     ["hantei","owner","返金の判断は代表へお願いします","esc"]],
+    [["owner","sanbo","雑メモ整理しといて","order"],
+     ["sanbo","memo","5件をtodoにして","order",["07","08"]],
+     ["memo","sanbo","4件todo化・1件は要判断","ok"]],
+    [["sanbo","shiryo","来週の研修資料、過去回から作って","order",["02","09"]],
+     ["shiryo","sanbo","第3回を流用して8割完成","ok"]],
+    [["sanbo","trend","主力3カテゴリの定点チェック","order",["03"]],
+     ["trend","sanbo","フィギュア系が前週比 +12%","ok"]],
+    [["sanbo","camp","12.12の準備リストを","order",["02","08"]],
+     ["camp","sanbo","残り6週・やること9件","ok"]],
+    [["migi","furikaeri","今週の質問をまとめて","order",["11"]],
+     ["furikaeri","sanbo","よく出る質問トップ3 → 手本に追加を提案","ok"]],
+    [["sanbo","manual","発送手順を1枚にまとめて","order",["06","09"]],
+     ["manual","sanbo","下書きできました【仕組み化候補】","ok"]],
+    [["sanbo","book","第4章の構成案を","order",["05","04"]],
+     ["book","sanbo","構成案を3パターン用意","ok"],
+     ["sanbo","owner","どの案にしますか？【要本人判断】","esc"]],
+  ],
+};
+
+/* =====================================================================
+   ここから下は仕組み（さわらなくてよい）
+   ===================================================================== */
+const $ = s => document.querySelector(s);
+const stage = $("#stage"), wires = $("#wires");
+const NODES = {};      // id -> {el, name, color, lv, xp}
+let paused = matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+function avatar(color, seed){
+  // 社員ごとに少しずつ違う、オリジナルの丸いロボット顔
+  const h = (seed*47)%360, shape = seed%3;
+  const head = shape===0 ? `<rect x="5" y="9" width="26" height="22" rx="9" fill="${color}"/>`
+             : shape===1 ? `<circle cx="18" cy="20" r="12" fill="${color}"/>`
+             : `<rect x="6" y="8" width="24" height="23" rx="5" fill="${color}"/>`;
+  return `<svg class="av" width="36" height="36" viewBox="0 0 36 36">
+    <line x1="18" y1="3" x2="18" y2="9" stroke="${color}" stroke-width="2"/><circle cx="18" cy="3" r="2.2" fill="hsl(${h} 90% 70%)"/>
+    ${head}
+    <rect x="9" y="15" width="18" height="10" rx="5" fill="#0b1224" opacity=".85"/>
+    <circle class="eye" cx="14" cy="20" r="2" fill="#fff"/><circle class="eye" cx="22" cy="20" r="2" fill="#fff"/>
+  </svg>`;
+}
+
+function makeNode(o, color, cls, big){
+  const el = document.createElement("div");
+  el.className = "node" + (big ? " big " + cls : "");
+  el.style.setProperty("--c", color);
+  el.innerHTML = `${avatar(color, Object.keys(NODES).length+1)}
+    <div>${big && o.tag ? `<div class="tag">${o.tag}</div>` : ""}
+      <div class="nm">${o.name}</div><div class="ds">${o.desc||""}</div>
+      <div class="meta">${o.lv ? `<span class="lv">Lv.${o.lv}</span>` : ""}<span class="dot"></span><span class="st">待機中</span></div>
+    </div><span class="badge"></span>`;
+  NODES[o.id] = { el, name:o.name, color, lv:o.lv||0, xp:0 };
+  return el;
+}
+
+function build(){
+  $("#brand").textContent = CONFIG.brand;
+  const d = Math.floor((Date.now() - new Date(CONFIG.startDate)) / 864e5) + 1;
+  $("#days").textContent = Math.max(1,d);
+
+  // 数字の帯
+  const k = $("#kpis");
+  CONFIG.kpis.forEach(x=>{
+    const pct = Math.min(100, x.value / x.goal * 100);
+    k.insertAdjacentHTML("beforeend",
+      `<div class="kpi"><small>${x.label}</small><div class="v">${x.value}<span>${x.unit}</span></div>
+       <div class="bar"><i style="width:${pct}%"></i></div><small>${x.goalText}</small></div>`);
+  });
+  k.insertAdjacentHTML("beforeend", `<div class="demo">● ${CONFIG.demoNote}</div>`);
+
+  // 代表
+  $("#ownerbox").appendChild(makeNode(CONFIG.owner, "#fbbf24", "owner", true));
+
+  // チーム
+  CONFIG.teams.forEach(t=>{
+    const sec = document.createElement("section");
+    sec.className = "team";
+    sec.innerHTML = `<h2><span style="color:${t.color}">✦</span>${t.name}<em>（${t.engine}）</em></h2>
+      <div class="tools">${t.tools.map(x=>`<span>${x}</span>`).join("")}</div>`;
+    if (t.worker){
+      const w = document.createElement("div"); w.className="worker";
+      w.appendChild(makeNode(t.worker, "#a78bfa", "", false));
+      sec.appendChild(w);
+    }
+    const row = document.createElement("div"); row.className="ceo-row";
+    row.appendChild(makeNode({id:t.id, name:t.name, tag:"リーダー・"+t.engine, desc:t.ceoDesc}, t.color, t.cls, true));
+    sec.appendChild(row);
+    const grid = document.createElement("div"); grid.className="depts";
+    if (t.depts.length===1) grid.style.gridTemplateColumns="1fr";
+    t.depts.forEach((dp,i)=>{
+      const col = document.createElement("div"); col.className="dept";
+      col.innerHTML = `<div class="dept-h" id="dh-${t.id}-${i}">${dp.name}<small>${dp.staff.length}人</small></div><div class="staff"></div>`;
+      dp.staff.forEach(s=> col.querySelector(".staff").appendChild(makeNode(s, t.color, "", false)));
+      grid.appendChild(col);
+    });
+    sec.appendChild(grid);
+    $("#teams").appendChild(sec);
+  });
+  buildMemory();
+  buildSpark();
+}
+
+/* ---------- 線（つながり） ---------- */
+function box(el){
+  const r = el.getBoundingClientRect(), s = stage.getBoundingClientRect();
+  return { x:r.left-s.left+r.width/2, y:r.top-s.top+r.height/2, t:r.top-s.top, b:r.bottom-s.top, l:r.left-s.left, r:r.right-s.left };
+}
+function pathBetween(a, b){
+  const A = box(a), B = box(b);
+  if (Math.abs(A.y-B.y) < 40){                       // 横並び
+    const ax = A.x < B.x ? A.r : A.l, bx = A.x < B.x ? B.l : B.r, mx=(ax+bx)/2;
+    return `M${ax},${A.y} C${mx},${A.y} ${mx},${B.y} ${bx},${B.y}`;
+  }
+  const down = B.y > A.y;
+  const ay = down ? A.b : A.t, by = down ? B.t : B.b, my=(ay+by)/2;
+  return `M${A.x},${ay} C${A.x},${my} ${B.x},${my} ${B.x},${by}`;
+}
+const NS = "http://www.w3.org/2000/svg";
+function drawWires(){
+  wires.setAttribute("width", stage.scrollWidth);
+  wires.setAttribute("height", stage.scrollHeight);
+  wires.querySelectorAll(".w").forEach(x=>x.remove());
+  const pairs = [["owner","sanbo","#fbbf24"],["owner","migi","#fbbf24"],["sanbo","migi","#64748b"],["staff","migi","#a78bfa"]];
+  const add = (a,b,c,dash)=>{
+    const p = document.createElementNS(NS,"path");
+    p.setAttribute("d", pathBetween(a,b)); p.setAttribute("class","w");
+    p.setAttribute("fill","none"); p.setAttribute("stroke",c); p.setAttribute("stroke-opacity",".35");
+    p.setAttribute("stroke-width","1.5"); if (dash) p.setAttribute("stroke-dasharray","4 5");
+    wires.prepend(p);
+  };
+  pairs.forEach(([a,b,c])=> NODES[a]&&NODES[b] && add(NODES[a].el, NODES[b].el, c, a==="sanbo"));
+  CONFIG.teams.forEach(t=> t.depts.forEach((_,i)=> add(NODES[t.id].el, document.getElementById(`dh-${t.id}-${i}`), t.color)));
+}
+
+/* ---------- 光の粒が線の上を走る ---------- */
+function fly(fromId, toId, color){
+  return new Promise(res=>{
+    const p = document.createElementNS(NS,"path");
+    p.setAttribute("d", pathBetween(NODES[fromId].el, NODES[toId].el));
+    p.setAttribute("fill","none"); p.setAttribute("stroke",color); p.setAttribute("stroke-width","2.5");
+    p.setAttribute("stroke-linecap","round"); p.style.filter=`drop-shadow(0 0 6px ${color})`;
+    wires.appendChild(p);
+    const L = p.getTotalLength();
+    p.setAttribute("stroke-dasharray", `60 ${L+60}`);
+    const dot = document.createElementNS(NS,"circle");
+    dot.setAttribute("r","5"); dot.setAttribute("fill","#fff"); dot.style.filter=`drop-shadow(0 0 8px ${color})`;
+    wires.appendChild(dot);
+    const dur = 900, t0 = performance.now();
+    (function step(now){
+      const k = Math.min(1,(now-t0)/dur), e = k<.5 ? 2*k*k : 1-Math.pow(-2*k+2,2)/2;
+      const pt = p.getPointAtLength(e*L);
+      dot.setAttribute("cx",pt.x); dot.setAttribute("cy",pt.y);
+      p.setAttribute("stroke-dashoffset", -(e*L-60));
+      if (k<1) requestAnimationFrame(step);
+      else { dot.remove(); p.style.transition="opacity .5s"; p.style.opacity=0; setTimeout(()=>p.remove(),500); res(); }
+    })(t0);
+  });
+}
+
+function bubble(id, text, kind){
+  const B = box(NODES[id].el);
+  const d = document.createElement("div");
+  d.className = "bubble " + (kind||"");
+  d.textContent = text;
+  d.style.left = B.x+"px"; d.style.top = (B.t-8)+"px";
+  stage.appendChild(d);
+  setTimeout(()=>{ d.classList.add("out"); setTimeout(()=>d.remove(),400); }, 2600);
+}
+
+function setState(id, cls, label){
+  const n = NODES[id]; if(!n) return;
+  n.el.classList.remove("busy","done");
+  if (cls) n.el.classList.add(cls);
+  n.el.querySelector(".st").textContent = label;
+}
+
+/* ---------- 会社の記憶（星座） ---------- */
+const MEM = {};
+function buildMemory(){
+  const s = $("#memsvg");
+  let h = "";
+  for (let i=0;i<70;i++){
+    const x=Math.random()*320, y=Math.random()*170, r=Math.random()*1.2+.3;
+    h += `<circle class="star" cx="${x}" cy="${y}" r="${r}" fill="#cbd5ff" style="--d:${2+Math.random()*4}s;--dl:${-Math.random()*4}s"/>`;
+  }
+  const C = {x:160,y:88};
+  const pos = {CL:{x:C.x-26,y:C.y}, SU:{x:C.x+26,y:C.y}};
+  CONFIG.rooms.forEach(([no],i)=>{
+    const a = -Math.PI/2 + i*2*Math.PI/CONFIG.rooms.length;
+    pos[no] = { x:C.x+Math.cos(a)*130, y:C.y+Math.sin(a)*66 };
+  });
+  h += `<line class="mlink" id="ml-core" x1="${pos.CL.x}" y1="${pos.CL.y}" x2="${pos.SU.x}" y2="${pos.SU.y}"/>`;
+  CONFIG.rooms.forEach(([no])=>{
+    h += `<line class="mlink" id="ml-${no}" x1="${pos.SU.x}" y1="${pos.SU.y}" x2="${pos[no].x}" y2="${pos[no].y}"/>`;
+  });
+  const node = (id,p,label,r,fill)=>`<g class="mnode" id="mn-${id}"><circle class="core" cx="${p.x}" cy="${p.y}" r="${r}" fill="${fill}"/>
+      <text x="${p.x}" y="${p.y+r+9}" text-anchor="middle">${label}</text></g>`;
+  h += node("CL",pos.CL,"憲法",6,"#7dd3fc");
+  h += node("SU",pos.SU,"全体像",6,"#7dd3fc");
+  CONFIG.rooms.forEach(([no,label])=> h += node(no,pos[no],label,3.5,"#64748b"));
+  s.innerHTML = h;
+}
+async function readMemory(rooms){
+  const on = id => { const e=document.getElementById(id); e&&e.classList.add("on"); return e; };
+  const offAll = () => document.querySelectorAll("#memsvg .on").forEach(e=>e.classList.remove("on"));
+  on("mn-CL"); await wait(250); on("ml-core"); on("mn-SU"); await wait(250);
+  rooms.forEach(no=>{ on("ml-"+no); on("mn-"+no); bump("s-mem"); });
+  setTimeout(offAll, 1800);
+}
+
+/* ---------- 数字 ---------- */
+const HOURS = Array.from({length:24},(_,i)=> (i>=8&&i<=22) ? 4+Math.round(Math.random()*12) : Math.round(Math.random()*3));
+function buildSpark(){
+  const now = new Date().getHours();
+  for (let i=now+1;i<24;i++) HOURS[i]=0;
+  drawSpark();
+}
+function drawSpark(){
+  const max = Math.max(...HOURS,1), w=150/24;
+  $("#spark").innerHTML = HOURS.map((v,i)=>
+    `<rect x="${i*w+1}" y="${30-v/max*28}" width="${w-2}" height="${Math.max(1,v/max*28)}" rx="1.5" fill="${i===new Date().getHours()?'#34d399':'#38bdf8'}" opacity="${i===new Date().getHours()?1:.55}"/>`).join("");
+}
+function bump(id, n=1){ const e=$("#"+id); e.textContent = (+e.textContent)+n; }
+function seedCounters(){
+  const h = new Date().getHours(); const base = HOURS.slice(0,h).reduce((a,b)=>a+b,0);
+  $("#s-dispatch").textContent = base;
+  $("#s-auto").textContent = Math.round(base*.82);
+  $("#s-esc").textContent = Math.round(base*.06);
+  $("#s-mem").textContent = base*2;
+}
+
+/* ---------- 下の記録 ---------- */
+function log(from, to, text, kind){
+  const t = new Date().toTimeString().slice(0,5);
+  const lab = kind==="esc" ? `<span class="lab esc">本人へ</span>` : kind==="rej" ? `<span class="lab rej">捨てる</span>` : kind==="ok" ? `<span class="lab ok">完了</span>` : "";
+  const d = document.createElement("div");
+  d.innerHTML = `<span class="t">${t}</span><span class="who">${NODES[from].name} → ${NODES[to].name}</span><span class="what">${text}</span>${lab}`;
+  const tk = $("#ticker"); tk.prepend(d);
+  while (tk.children.length > 10) tk.lastChild.remove();
+}
+
+/* ---------- 仕事の流れを再生 ---------- */
+const wait = ms => new Promise(r=>setTimeout(r,ms));
+async function waitIfPaused(){ while (paused) await wait(300); }
+let escCount = 0;
+async function runStep([from,to,text,kind,rooms]){
+  await waitIfPaused();
+  const color = kind==="esc" ? "#fb7185" : kind==="rej" ? "#94a3b8" : kind==="ok" ? "#34d399" : NODES[from].color;
+  setState(from, "busy", kind==="order" ? "依頼中" : "納品中");
+  await fly(from, to, color);
+  setState(from, null, "待機中");
+  bubble(to, text, kind==="order" ? "" : kind);
+  log(from, to, text.replace(/【.*?】/g,""), kind);
+  if (kind==="order"){ setState(to,"busy","作業中"); bump("s-dispatch"); HOURS[new Date().getHours()]++; drawSpark(); }
+  else if (kind==="esc"){ setState(to,"busy","判断待ち"); bump("s-esc"); escCount++; showBadge(to, `判断待ち ${escCount}`); }
+  else { setState(to,"done","受け取り"); bump("s-auto"); levelUp(from); setTimeout(()=>setState(to,null,"待機中"),1600); }
+  if (rooms) await readMemory(rooms);
+  await wait(1500);
+}
+function showBadge(id, text){ const b=NODES[id].el.querySelector(".badge"); b.textContent=text; b.classList.add("on"); }
+function levelUp(id){
+  const n = NODES[id]; if(!n.lv) return;
+  if (++n.xp >= 3){ n.xp=0; n.lv++; n.el.querySelector(".lv").textContent="Lv."+n.lv; bubble(id,"レベルアップ！","ok"); }
+}
+async function loop(){
+  let order = [];
+  for(;;){
+    if (!order.length) order = CONFIG.scenarios.map((_,i)=>i).sort(()=>Math.random()-.5);
+    for (const st of CONFIG.scenarios[order.pop()]) await runStep(st);
+    if (escCount>2){ escCount=0; NODES.owner.el.querySelector(".badge").classList.remove("on"); setState("owner",null,"待機中"); }
+    await wait(900);
+  }
+}
+
+/* ---------- 時計・一時停止 ---------- */
+setInterval(()=>{ $("#clock").textContent = new Date().toTimeString().slice(0,8); }, 500);
+$("#pause").onclick = ()=>{
+  paused = !paused;
+  $("#wrap").classList.toggle("paused", paused);
+  $("#pause").textContent = paused ? "▶ 動かす" : "⏸ 動きを止める";
+};
+
+build(); seedCounters();
+requestAnimationFrame(()=>{ drawWires(); if (paused){ $("#wrap").classList.add("paused"); $("#pause").textContent="▶ 動かす"; } loop(); });
+addEventListener("resize", ()=> requestAnimationFrame(drawWires));
+</script>
+</body>
+</html>
