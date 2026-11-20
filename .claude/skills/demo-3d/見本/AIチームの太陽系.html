@@ -1,0 +1,524 @@
+<title>AIチームの太陽系</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;700;900&family=JetBrains+Mono:wght@500;700&display=swap">
+<style>
+/* Layout: 全画面の3Dステージに、上＝タイトルと負荷メーター、右（スマホは下）＝説明パネル、下＝切り替えボタンを重ねる。
+   投影用に暗い舞台で統一した単一テーマ。 */
+:root{
+  --bg:#0b1222;
+  --surface:rgba(17,26,47,.88);
+  --line:#283656;
+  --fg:#e9edf6;
+  --fg2:#c6cee0;
+  --muted:#97a3bf;
+  --gold:#f2b84b;
+  --alert:#ef6a5a;
+  --ink:#0b1222;
+  --f-body:"Zen Kaku Gothic New","Hiragino Sans","Yu Gothic","Noto Sans JP",sans-serif;
+  --f-data:"JetBrains Mono",ui-monospace,"SFMono-Regular",Menlo,monospace;
+  color-scheme:dark;
+}
+html,body{height:100%}
+body{background:var(--bg);color:var(--fg);font-family:var(--f-body);font-size:14px;line-height:1.6;overflow:hidden}
+.app{position:relative;height:100%;overflow:hidden}
+
+#stage{position:absolute;inset:0;cursor:grab;touch-action:none}
+#stage.dragging{cursor:grabbing}
+#stage.hover{cursor:pointer}
+#stage canvas{display:block;width:100%;height:100%}
+.fail{position:absolute;inset:0;display:grid;place-items:center;color:var(--muted);padding:24px;text-align:center}
+
+#labels{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+.lbl{position:absolute;left:0;top:0;pointer-events:auto;font:700 12px/1 var(--f-body);color:var(--fg);background:rgba(11,18,34,.8);border:1px solid var(--c);border-radius:999px;padding:6px 10px;white-space:nowrap;cursor:pointer;transition:background .2s,color .2s;will-change:transform}
+.lbl::before{content:"";display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--c);margin-right:6px;vertical-align:1px}
+.lbl.is-sel{background:var(--c);color:var(--ink)}
+.lbl.is-sel::before{background:var(--ink)}
+.lbl.core{font-size:13px;padding:7px 12px}
+button:focus-visible{outline:2px solid var(--fg);outline-offset:2px}
+
+.top{position:absolute;top:16px;left:max(16px,env(safe-area-inset-left,0px));right:max(16px,env(safe-area-inset-right,0px));display:flex;justify-content:space-between;align-items:flex-start;gap:16px;pointer-events:none}
+.brand{min-width:0}
+.brand h1{margin:0;font-weight:900;font-size:clamp(20px,2.6vw,28px);letter-spacing:.02em;line-height:1.25;text-wrap:balance}
+.brand p{margin:4px 0 0;color:var(--muted);font-size:13px;max-width:30em}
+.meter{pointer-events:auto;flex:none;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px 14px;min-width:200px;backdrop-filter:blur(8px)}
+.meter .lab{font-size:11px;color:var(--muted);letter-spacing:.08em}
+.meter .num{font:700 28px/1.15 var(--f-data);font-variant-numeric:tabular-nums;color:var(--alert);transition:color .4s}
+.meter .num small{font:700 13px var(--f-body);margin-left:4px;color:var(--muted)}
+.bar{height:6px;border-radius:3px;background:var(--line);overflow:hidden;margin-top:6px}
+.bar i{display:block;height:100%;width:100%;background:var(--alert);border-radius:3px;transition:width .25s,background .4s}
+.meter.calm .num{color:var(--gold)}
+.meter.calm .bar i{background:var(--gold)}
+
+.panel{position:absolute;top:118px;right:max(16px,env(safe-area-inset-right,0px));bottom:112px;width:320px;overflow:auto;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:18px;backdrop-filter:blur(10px)}
+.eyebrow{font-size:11px;letter-spacing:.12em;color:var(--muted);margin:0}
+.panel h2{margin:4px 0 8px;font-size:20px;font-weight:900;line-height:1.4;text-wrap:balance}
+.panel p{margin:0 0 12px;color:var(--fg2)}
+.sub{font-size:12px;font-weight:700;color:var(--muted)!important;margin:0 0 6px!important;letter-spacing:.04em}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 14px;padding:0;list-style:none}
+.chips li{font-size:12px;padding:4px 9px;border-radius:6px;background:rgba(255,255,255,.05);border:1px solid var(--line)}
+.chips li.keep{border-color:var(--gold);color:var(--gold)}
+.note{font-size:12px;color:var(--muted)!important;border-top:1px solid var(--line);padding-top:10px;margin:4px 0 0!important}
+.agentlist{display:grid;gap:6px;margin:0 0 14px}
+.agentlist button{display:flex;align-items:center;gap:8px;text-align:left;font:700 13px var(--f-body);color:var(--fg);background:rgba(255,255,255,.04);border:1px solid var(--line);border-radius:8px;padding:8px 10px;cursor:pointer}
+.agentlist button:hover{border-color:var(--c)}
+.sw{width:10px;height:10px;border-radius:3px;background:var(--c);flex:none}
+.cnt{margin-left:auto;font:500 11px var(--f-data);color:var(--muted)}
+.back{font:700 12px var(--f-body);color:var(--muted);background:none;border:0;padding:0;margin:0 0 10px;cursor:pointer}
+.back:hover{color:var(--fg)}
+
+.controls{position:absolute;bottom:20px;left:max(16px,env(safe-area-inset-left,0px));right:calc(max(16px,env(safe-area-inset-right,0px)) + 336px);display:flex;flex-direction:column;align-items:center;gap:8px;pointer-events:none}
+.seg{pointer-events:auto;display:inline-flex;background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:4px;gap:4px;backdrop-filter:blur(8px);max-width:100%}
+.seg button{font:700 14px var(--f-body);color:var(--muted);background:transparent;border:0;border-radius:999px;padding:10px 18px;cursor:pointer;white-space:nowrap}
+.seg button:hover{color:var(--fg)}
+.seg button[aria-pressed="true"]{background:var(--fg);color:var(--ink)}
+.seg button.after[aria-pressed="true"]{background:var(--gold);color:var(--ink)}
+.hint{font-size:12px;color:var(--muted);text-align:center}
+
+@media (max-width:720px){
+  .brand h1{font-size:19px}
+  .brand p{display:none}
+  .meter{min-width:0;padding:8px 12px}
+  .meter .num{font-size:22px}
+  .panel{top:auto;left:max(16px,env(safe-area-inset-left,0px));right:max(16px,env(safe-area-inset-right,0px));width:auto;bottom:100px;max-height:34%;padding:14px}
+  .panel h2{font-size:17px}
+  .controls{right:max(16px,env(safe-area-inset-right,0px));bottom:16px}
+  .seg button{padding:9px 12px;font-size:13px}
+  .hint .long{display:none}
+}
+@media (prefers-reduced-motion:reduce){
+  *{transition:none!important}
+}
+</style>
+
+<div class="app">
+  <div id="stage" role="img" aria-label="中心の人とAIメンバーの関係を表す3Dの図。ドラッグで回転できます。"></div>
+  <div id="labels"></div>
+
+  <header class="top">
+    <div class="brand">
+      <h1 id="tTitle">AIチームの太陽系</h1>
+      <p id="tSub">社長のまわりを回っている仕事を、AIメンバーに振り分けると何が変わるか。</p>
+    </div>
+    <div class="meter" id="meter" aria-live="polite">
+      <div class="lab" id="tMeter">社長の手元にある仕事</div>
+      <div class="num"><span id="cnt">13</span><small>件</small></div>
+      <div class="bar"><i id="bar"></i></div>
+    </div>
+  </header>
+
+  <aside class="panel" id="panel" aria-live="polite"></aside>
+
+  <div class="controls">
+    <div class="seg" role="group" aria-label="表示の切り替え">
+      <button type="button" id="btnBefore" aria-pressed="true">いま：全部ひとりで</button>
+      <button type="button" id="btnAfter" class="after" aria-pressed="false">AIチームに任せる</button>
+    </div>
+    <div class="hint">ドラッグで回転・丸をタップで説明<span class="long">・ホイールで拡大縮小</span></div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+(function(){
+  /* =====================================================================
+     設定（作り替えるときは、ここと先頭の <title> だけを書き換える）
+     - tasks の a：-1 = 真ん中の人に残る仕事／0以上 = agents の何番目に渡すか（0から数える）
+     - agents は3〜6人。色は次の6色から選ぶ：
+       #5cc8c2 #6aa8f0 #a58cf0 #f08ca8 #8fd17a #f0a35c
+     - 文言はすべて、経営者が日常語で読める言葉で書く
+     ===================================================================== */
+  const CONFIG = {
+    title: 'AIチームの太陽系',
+    subtitle: '社長のまわりを回っている仕事を、AIメンバーに振り分けると何が変わるか。',
+    meterLabel: '社長の手元にある仕事',
+    buttons: { before: 'いま：全部ひとりで', after: 'AIチームに任せる' },
+    center: {
+      name: '社長',
+      keptLabel: '本人にしかできない仕事',
+      textBefore: 'いまは全部の仕事が社長の手元にあります。どれか1つで手が止まると、後ろの仕事も止まります。',
+      textAfter: '手元に残すのは、本人にしかできない仕事だけ。ほかはAIメンバーが下ごしらえして届けます。'
+    },
+    before: {
+      eyebrow: 'いまの状態',
+      heading: '全部が社長を通っている',
+      body: '問い合わせも、集計も、資料づくりも、すべて社長の手元。社長が止まると、会社の仕事も止まります。',
+      listLabel: '社長が抱えている仕事'
+    },
+    after: {
+      eyebrow: 'AIチームに任せた状態',
+      heading: '社長は3つの仕事に集中',
+      body: '作業はAIメンバーが受け持ち、社長は判断・営業・登壇だけ。AIは決めた範囲で動き、迷ったら社長に上げます。',
+      keptLabel: '社長に残る仕事',
+      membersLabel: 'AIメンバー（押すと説明）'
+    },
+    memberEyebrow: 'AIメンバー',
+    upLabel: '社長に上げるもの',
+    guardNote: 'AIは下書きと提案まで。送信、金額の決定、お客さまへの最終回答は、人が確認してから行います。',
+    credit: 'このデモは、AIに日本語で「3Dで見せて」と頼んで作りました。',
+    tasks: [
+      {n:'最終判断', a:-1}, {n:'営業・商談', a:-1}, {n:'登壇・講師', a:-1},
+      {n:'問い合わせの一次返信', a:0}, {n:'よくある質問の更新', a:0},
+      {n:'AI最新情報の収集', a:1}, {n:'競合・市場の調査', a:1},
+      {n:'研修資料の下書き', a:2}, {n:'提案書のたたき台', a:2},
+      {n:'売上の日次集計', a:3}, {n:'受注データの転記', a:3},
+      {n:'朝の優先順位メモ', a:4}, {n:'議事録・メモ整理', a:4}
+    ],
+    agents: [
+      {name:'問い合わせAI', color:'#5cc8c2', role:'お客さまからの質問に、決めたルールの範囲で一次返信の下書きを作ります。夜の問い合わせも朝までにまとめておきます。', up:'クレーム、返金、値引きの相談'},
+      {name:'リサーチAI', color:'#6aa8f0', role:'毎朝ニュースや市場の動きを集め、3行に要約して届けます。', up:'事業の方針に関わる大きな変化'},
+      {name:'資料づくりAI', color:'#a58cf0', role:'過去の資料をもとに、研修資料や提案書の下書きを作ります。', up:'金額や条件が入る提案書の最終版'},
+      {name:'集計AI', color:'#f08ca8', role:'売上や受注の数字を毎日まとめ、表に転記します。', up:'いつもと違う数字の動き'},
+      {name:'秘書AI', color:'#8fd17a', role:'メモとやることリストを読み、毎朝「今日の優先3つ」を提案します。', up:'優先順位の最終決定'}
+    ]
+  };
+  /* ===================== 設定ここまで（以下は触らない） ===================== */
+
+  const TASKS = CONFIG.tasks, AGENTS = CONFIG.agents;
+  const KEPT = TASKS.filter(t => t.a < 0).map(t => t.n);
+  const tasksOf = i => TASKS.filter(t => t.a === i).map(t => t.n);
+
+  const stage = document.getElementById('stage');
+  const labelsEl = document.getElementById('labels');
+  const panel = document.getElementById('panel');
+  const btnBefore = document.getElementById('btnBefore');
+  const btnAfter = document.getElementById('btnAfter');
+  const meterEl = document.getElementById('meter');
+  const cntEl = document.getElementById('cnt');
+  const barEl = document.getElementById('bar');
+
+  let target = 0, sel = null;
+
+  /* ---------- 説明パネル ---------- */
+  const chips = (list, cls) => '<ul class="chips">' + list.map(n => `<li class="${cls||''}">${n}</li>`).join('') + '</ul>';
+  function renderPanel(){
+    const C = CONFIG;
+    let h = '';
+    if (sel !== null) h += '<button type="button" class="back" id="back">← 全体に戻る</button>';
+    if (sel === 'core'){
+      h += `<p class="eyebrow">中心にいる人</p><h2>${C.center.name}</h2>
+        <p>${target ? C.center.textAfter : C.center.textBefore}</p>
+        <p class="sub">${C.center.keptLabel}</p>${chips(KEPT,'keep')}`;
+    } else if (typeof sel === 'number'){
+      const d = AGENTS[sel];
+      h += `<p class="eyebrow" style="color:${d.color}">${C.memberEyebrow}${target ? '' : '（まだ出番なし）'}</p><h2>${d.name}</h2>
+        <p>${d.role}</p>
+        <p class="sub">担当する仕事</p>${chips(tasksOf(sel))}
+        <p class="sub">${C.upLabel}</p><p>${d.up}</p>
+        ${target ? '' : `<p>下の「${C.buttons.after}」を押すと、この仕事が${C.center.name}からAIに移ります。</p>`}
+        <p class="note">${C.guardNote}</p>`;
+    } else if (!target){
+      h += `<p class="eyebrow">${C.before.eyebrow}</p><h2>${C.before.heading}</h2>
+        <p>${C.before.body}</p>
+        <p class="sub">${C.before.listLabel}（${TASKS.length}件）</p>${chips(TASKS.map(t => t.n))}
+        <p class="note">下の「${C.buttons.after}」を押してみてください。${C.credit}</p>`;
+    } else {
+      h += `<p class="eyebrow">${C.after.eyebrow}</p><h2>${C.after.heading}</h2>
+        <p>${C.after.body}</p>
+        <p class="sub">${C.after.keptLabel}</p>${chips(KEPT,'keep')}
+        <p class="sub">${C.after.membersLabel}</p>
+        <div class="agentlist">${AGENTS.map((d,i) => `<button type="button" data-i="${i}" style="--c:${d.color}"><span class="sw"></span>${d.name}<span class="cnt">${tasksOf(i).length}件</span></button>`).join('')}</div>
+        <p class="note">${C.credit}</p>`;
+    }
+    panel.innerHTML = h;
+    panel.scrollTop = 0;
+    panel.querySelectorAll('.agentlist button').forEach(b => b.addEventListener('click', () => select(+b.dataset.i)));
+    const back = document.getElementById('back');
+    if (back) back.addEventListener('click', () => select(null));
+  }
+
+  // 画面上部・ボタンの文言を設定から反映
+  document.getElementById('tTitle').textContent = CONFIG.title;
+  document.getElementById('tSub').textContent = CONFIG.subtitle;
+  document.getElementById('tMeter').textContent = CONFIG.meterLabel;
+  btnBefore.textContent = CONFIG.buttons.before;
+  btnAfter.textContent = CONFIG.buttons.after;
+  cntEl.textContent = TASKS.length;
+
+  function setMode(v){
+    target = v;
+    btnBefore.setAttribute('aria-pressed', String(v === 0));
+    btnAfter.setAttribute('aria-pressed', String(v === 1));
+    sel = null;
+    renderPanel();
+    updateLabelSel();
+  }
+  btnBefore.addEventListener('click', () => setMode(0));
+  btnAfter.addEventListener('click', () => setMode(1));
+
+  let updateLabelSel = () => {};
+  let lastInteract = 0;
+  function select(s){
+    sel = (s !== null && sel === s) ? null : s;
+    lastInteract = performance.now();
+    renderPanel();
+    updateLabelSel();
+  }
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') select(null); });
+
+  renderPanel();
+
+  /* ---------- 3D ---------- */
+  if (typeof THREE === 'undefined'){ stage.innerHTML = '<p class="fail">3Dの部品を読み込めませんでした。通信状態を確認して、もう一度開いてください。</p>'; return; }
+  let renderer;
+  try { renderer = new THREE.WebGLRenderer({antialias:true}); }
+  catch(e){ stage.innerHTML = '<p class="fail">この端末では3D表示が使えません。別のブラウザでお試しください。</p>'; return; }
+
+  const RM = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+  renderer.setClearColor(0x0b1222, 1);
+  stage.appendChild(renderer.domElement);
+
+  const scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(45, 1, 0.1, 200);
+  scene.add(new THREE.AmbientLight(0xb8c4e0, 0.55));
+  const keyLight = new THREE.DirectionalLight(0xffffff, 0.6); keyLight.position.set(5, 8, 6); scene.add(keyLight);
+  const coreLight = new THREE.PointLight(0xf2b84b, 1.2, 14); scene.add(coreLight);
+
+  // 星
+  (function(){
+    const pts = [];
+    for (let i = 0; i < 700; i++){
+      const r = 35 + Math.random()*30, u = Math.random()*2 - 1, a = Math.random()*Math.PI*2, s = Math.sqrt(1 - u*u);
+      pts.push(r*s*Math.cos(a), r*u, r*s*Math.sin(a));
+    }
+    const g = new THREE.BufferGeometry();
+    g.setAttribute('position', new THREE.Float32BufferAttribute(pts, 3));
+    scene.add(new THREE.Points(g, new THREE.PointsMaterial({color:0x8090b8, size:0.12, transparent:true, opacity:0.7})));
+  })();
+
+  function glowTexture(){
+    const c = document.createElement('canvas'); c.width = c.height = 128;
+    const g = c.getContext('2d'), gr = g.createRadialGradient(64,64,0,64,64,64);
+    gr.addColorStop(0, 'rgba(255,255,255,1)'); gr.addColorStop(0.25, 'rgba(255,255,255,.45)'); gr.addColorStop(1, 'rgba(255,255,255,0)');
+    g.fillStyle = gr; g.fillRect(0, 0, 128, 128);
+    return new THREE.CanvasTexture(c);
+  }
+  const GLOW = glowTexture();
+  function makeGlow(color, size){
+    const s = new THREE.Sprite(new THREE.SpriteMaterial({map:GLOW, color, transparent:true, depthWrite:false, blending:THREE.AdditiveBlending}));
+    s.scale.set(size, size, 1);
+    return s;
+  }
+
+  const cGold = new THREE.Color(0xf2b84b), cAlert = new THREE.Color(0xef6a5a), cIdle = new THREE.Color(0xd5dcec);
+
+  // 中心：社長
+  const core = new THREE.Mesh(new THREE.SphereGeometry(1, 48, 48),
+    new THREE.MeshStandardMaterial({color:0xf2b84b, emissive:0xf2b84b, emissiveIntensity:0.35, roughness:0.45, metalness:0.1}));
+  scene.add(core);
+  const coreGlow = makeGlow(0xef6a5a, 4.4); scene.add(coreGlow);
+
+  // 軌道
+  const R = 4.8;
+  const ringPts = [];
+  for (let i = 0; i <= 128; i++){ const a = i/128*Math.PI*2; ringPts.push(new THREE.Vector3(Math.cos(a)*R, 0, Math.sin(a)*R)); }
+  scene.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(ringPts), new THREE.LineBasicMaterial({color:0x3a4a70, transparent:true, opacity:0.5})));
+
+  // AIメンバー
+  const agents = AGENTS.map((d, i) => {
+    const col = new THREE.Color(d.color);
+    const mesh = new THREE.Mesh(new THREE.IcosahedronGeometry(0.48, 1),
+      new THREE.MeshStandardMaterial({color:col, emissive:col, emissiveIntensity:0.35, flatShading:true, roughness:0.5, transparent:true}));
+    mesh.userData.idx = i; scene.add(mesh);
+    const glow = makeGlow(col, 1.9); scene.add(glow);
+    const beam = new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(), new THREE.Vector3()]),
+      new THREE.LineBasicMaterial({color:col, transparent:true, opacity:0}));
+    scene.add(beam);
+    const dot = new THREE.Mesh(new THREE.SphereGeometry(0.07, 12, 12), new THREE.MeshBasicMaterial({color:col, transparent:true, opacity:0}));
+    scene.add(dot);
+    return {d, col, mesh, glow, beam, dot, base:i/AGENTS.length*Math.PI*2, pos:new THREE.Vector3(), scale:1};
+  });
+
+  // 仕事（小さな立方体）
+  const tasks = TASKS.map((t, i) => {
+    const col = t.a < 0 ? cGold.clone() : agents[t.a].col.clone();
+    const mesh = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.2, 0.2),
+      new THREE.MeshStandardMaterial({color:cIdle, emissive:cIdle, emissiveIntensity:0.45, roughness:0.4}));
+    scene.add(mesh);
+    const sib = TASKS.filter(x => x.a === t.a);
+    return {t, col, mesh, k:sib.indexOf(t), nsib:sib.length, seed:Math.random()*10, delay:0};
+  });
+  const delegated = tasks.filter(t => t.t.a >= 0);
+  delegated.forEach((t, j) => t.delay = j*0.045);
+  const maxDelay = (delegated.length - 1)*0.045;
+
+  // ラベル
+  function mkLabel(text, color, onClick){
+    const b = document.createElement('button');
+    b.type = 'button'; b.className = 'lbl'; b.textContent = text;
+    b.style.setProperty('--c', color);
+    b.addEventListener('click', onClick);
+    labelsEl.appendChild(b);
+    return b;
+  }
+  const coreLbl = mkLabel(CONFIG.center.name, '#f2b84b', () => select('core')); coreLbl.classList.add('core');
+  agents.forEach((ag, i) => ag.lbl = mkLabel(ag.d.name, ag.d.color, () => select(i)));
+  updateLabelSel = function(){
+    coreLbl.classList.toggle('is-sel', sel === 'core');
+    agents.forEach((ag, i) => ag.lbl.classList.toggle('is-sel', sel === i));
+  };
+
+  // カメラ操作
+  const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+  const ease = t => t < 0.5 ? 2*t*t : 1 - Math.pow(-2*t + 2, 2)/2;
+  let theta = 0.6, phi = 1.1, dist = 15, targetDist = 15, baseDist = 15, W = 1, H = 1;
+  function updateCam(){
+    camera.position.set(dist*Math.sin(phi)*Math.sin(theta), dist*Math.cos(phi), dist*Math.sin(phi)*Math.cos(theta));
+    camera.lookAt(0, 0, 0);
+  }
+
+  function resize(){
+    const sr = stage.getBoundingClientRect(), pr = panel.getBoundingClientRect();
+    W = Math.max(1, sr.width); H = Math.max(1, sr.height);
+    renderer.setSize(W, H, false);
+    camera.aspect = W/H;
+    const narrow = W <= 720;
+    let ox = 0, oy = 0, availW = W, availH = H;
+    if (narrow){ availH = Math.max(120, pr.top - sr.top); oy = (H - availH)/2; }
+    else { availW = Math.max(200, W - pr.width - 32); ox = (W - availW)/2; }
+    camera.setViewOffset(W, H, ox, oy, W, H);
+    camera.updateProjectionMatrix();
+    baseDist = clamp(Math.max(17.5, 16.5*H/availW, 11*H/availH), 17.5, 34);
+    targetDist = baseDist;
+  }
+  if (window.ResizeObserver){ const ro = new ResizeObserver(resize); ro.observe(stage); ro.observe(panel); }
+  window.addEventListener('resize', resize);
+  resize();
+
+  const ray = new THREE.Raycaster(), ndc = new THREE.Vector2();
+  const pickables = [core].concat(agents.map(a => a.mesh));
+  function pick(e){
+    const r = stage.getBoundingClientRect();
+    ndc.set((e.clientX - r.left)/r.width*2 - 1, -((e.clientY - r.top)/r.height)*2 + 1);
+    ray.setFromCamera(ndc, camera);
+    const hit = ray.intersectObjects(pickables)[0];
+    if (!hit) return undefined;
+    return hit.object === core ? 'core' : hit.object.userData.idx;
+  }
+
+  let dragging = false, moved = 0, px = 0, py = 0;
+  stage.addEventListener('pointerdown', e => {
+    dragging = true; moved = 0; px = e.clientX; py = e.clientY;
+    try { stage.setPointerCapture(e.pointerId); } catch(_){}
+    stage.classList.add('dragging'); lastInteract = performance.now();
+  });
+  stage.addEventListener('pointermove', e => {
+    if (dragging){
+      const dx = e.clientX - px, dy = e.clientY - py; px = e.clientX; py = e.clientY;
+      moved += Math.abs(dx) + Math.abs(dy);
+      theta -= dx*0.006; phi = clamp(phi - dy*0.005, 0.35, 1.5);
+      lastInteract = performance.now();
+    } else if (e.pointerType === 'mouse'){
+      stage.classList.toggle('hover', pick(e) !== undefined);
+    }
+  });
+  stage.addEventListener('pointerup', e => {
+    if (!dragging) return;
+    dragging = false; stage.classList.remove('dragging');
+    if (moved < 6){ const p = pick(e); select(p === undefined ? null : p); }
+  });
+  stage.addEventListener('pointercancel', () => { dragging = false; stage.classList.remove('dragging'); });
+  stage.addEventListener('wheel', e => {
+    e.preventDefault();
+    targetDist = clamp(targetDist*(1 + e.deltaY*0.001), baseDist*0.6, baseDist*1.5);
+    lastInteract = performance.now();
+  }, {passive:false});
+
+  // ラベル配置
+  const v = new THREE.Vector3();
+  function placeLabel(el, x, y, z, opacity){
+    v.set(x, y, z).project(camera);
+    const sx = (v.x*0.5 + 0.5)*W, sy = (-v.y*0.5 + 0.5)*H;
+    el.style.transform = `translate(${sx.toFixed(1)}px,${sy.toFixed(1)}px) translate(-50%,-100%)`;
+    el.style.visibility = v.z < 1 ? 'visible' : 'hidden';
+    el.style.opacity = opacity;
+  }
+
+  // アニメーション
+  let m = 0, time = 0, last = performance.now(), shown = -1;
+  const tA = new THREE.Vector3(), tB = new THREE.Vector3(), tC = new THREE.Color();
+
+  function frame(now){
+    const dt = Math.min(0.05, (now - last)/1000); last = now;
+    time += dt*(RM ? 0.25 : 1);
+
+    if (RM) m = target;
+    else { const step = dt/2.6; m = target > m ? Math.min(target, m + step) : Math.max(target, m - step); }
+    const eA = ease(clamp(m*1.4, 0, 1));
+
+    if (!dragging && !RM && now - lastInteract > 2500) theta += dt*0.05;
+    dist += (targetDist - dist)*Math.min(1, dt*6);
+    updateCam();
+
+    // 社長
+    const rate = 7 - 5*eA, amp = 0.07*(1 - eA) + 0.02, wave = Math.sin(time*rate);
+    core.scale.setScalar(1 + amp*wave);
+    tC.copy(cAlert).lerp(cGold, eA);
+    coreGlow.material.color.copy(tC);
+    coreLight.color.copy(tC);
+    coreGlow.scale.setScalar((4.4 + (1 - eA)*1.2*(0.5 + 0.5*wave))*(sel === 'core' ? 1.15 : 1));
+    core.material.emissive.copy(cGold).lerp(cAlert, (1 - eA)*0.45);
+
+    // AIメンバー
+    agents.forEach((ag, i) => {
+      const a = ag.base + time*0.12;
+      ag.pos.set(Math.cos(a)*R, Math.sin(time*0.6 + i)*0.25, Math.sin(a)*R);
+      const f = sel === i ? 1.3 : 1;
+      ag.scale = (0.45 + 0.55*eA)*f;
+      ag.mesh.position.copy(ag.pos); ag.glow.position.copy(ag.pos);
+      ag.mesh.scale.setScalar(ag.scale);
+      ag.mesh.rotation.y += dt*0.6; ag.mesh.rotation.x += dt*0.3;
+      ag.mesh.material.opacity = 0.3 + 0.7*eA;
+      ag.mesh.material.emissiveIntensity = 0.1 + 0.18*eA + (sel === i ? 0.2 : 0);
+      ag.glow.material.opacity = 0.1 + 0.35*eA;
+      ag.glow.scale.setScalar((1.2 + 0.9*eA)*f);
+      const p = ag.beam.geometry.attributes.position;
+      p.setXYZ(1, ag.pos.x, ag.pos.y, ag.pos.z); p.needsUpdate = true;
+      ag.beam.material.opacity = 0.35*eA*(sel === null || sel === 'core' || sel === i ? 1 : 0.35);
+      const fr = (time*0.45 + i*0.2) % 1;
+      ag.dot.position.copy(ag.pos).multiplyScalar(fr);
+      ag.dot.material.opacity = 0.95*eA;
+    });
+
+    // 仕事
+    let remaining = 0;
+    tasks.forEach((tk, i) => {
+      const kept = tk.t.a < 0;
+      const local = kept ? m : clamp((m - tk.delay)/(1 - maxDelay), 0, 1);
+      const e = ease(local);
+      const ab = i/tasks.length*Math.PI*2 + time*1.3 + Math.sin(time*1.7 + tk.seed)*0.25;
+      const rb = 1.6 + 0.28*Math.sin(time*2.6 + tk.seed*2);
+      tA.set(Math.cos(ab)*rb, 0.55*Math.sin(time*2.1 + tk.seed*3), Math.sin(ab)*rb);
+      if (kept){
+        const aa = tk.k/tk.nsib*Math.PI*2 + time*0.35;
+        tB.set(Math.cos(aa)*1.75, 0.12*Math.sin(time + tk.seed), Math.sin(aa)*1.75);
+      } else {
+        const ag = agents[tk.t.a], aa = tk.k/tk.nsib*Math.PI*2 + time*0.9;
+        tB.set(ag.pos.x + Math.cos(aa)*0.85, ag.pos.y + 0.22*Math.sin(time*1.3 + tk.seed), ag.pos.z + Math.sin(aa)*0.85);
+      }
+      tk.mesh.position.copy(tA).lerp(tB, e);
+      if (!kept) tk.mesh.position.y += Math.sin(local*Math.PI)*1.3;
+      tk.mesh.rotation.x += dt*(2 - 1.4*e); tk.mesh.rotation.y += dt*(2.4 - 1.6*e);
+      tk.mesh.material.color.copy(cIdle).lerp(tk.col, e);
+      tk.mesh.material.emissive.copy(tk.mesh.material.color);
+      if (kept || local < 0.6) remaining++;
+    });
+
+    if (remaining !== shown){
+      shown = remaining;
+      cntEl.textContent = remaining;
+      barEl.style.width = (remaining/tasks.length*100) + '%';
+      meterEl.classList.toggle('calm', remaining <= KEPT.length);
+    }
+
+    renderer.render(scene, camera);
+
+    placeLabel(coreLbl, 0, 1.45*core.scale.x, 0, 1);
+    agents.forEach(ag => placeLabel(ag.lbl, ag.pos.x, ag.pos.y + 0.75*ag.scale + 0.15, ag.pos.z, (0.5 + 0.5*eA).toFixed(2)));
+
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+})();
+</script>
