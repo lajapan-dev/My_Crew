@@ -1,0 +1,188 @@
+<title>絵コンテ見本帳</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@500;700;900&family=Noto+Sans+JP:wght@400;500;700&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: a storyboard sheet (カット｜画面｜内容｜音・文字｜秒) per sample, tabbed; pencil-sketch frames with red camera marks */
+:root{
+  --paper:#f6f7f4; --sheet:#ffffff; --ink:#22262b; --ink-soft:#5d646c; --rule:#d9ddd6;
+  --red:#c8412f; --indigo:#2d4a8a; --glow:#f3d98a; --coffee:#6b4a33; --chip:#eef0ea;
+  --f-display:"Zen Kaku Gothic New","Hiragino Sans","Yu Gothic",sans-serif;
+  --f-body:"Noto Sans JP","Hiragino Sans","Yu Gothic",sans-serif;
+  --f-mono:"JetBrains Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --paper:#16181b; --sheet:#1e2125; --ink:#e6e8e3; --ink-soft:#a3a9ae; --rule:#33383d;
+  --red:#ff7a63; --indigo:#8fb0ff; --glow:#8a7330; --coffee:#b98a63; --chip:#262a2f; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --paper:#16181b; --sheet:#1e2125; --ink:#e6e8e3; --ink-soft:#a3a9ae; --rule:#33383d;
+  --red:#ff7a63; --indigo:#8fb0ff; --glow:#8a7330; --coffee:#b98a63; --chip:#262a2f; color-scheme:dark}
+body{background:var(--paper);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.7}
+.wrap{max-width:1040px;margin:0 auto;padding-block:28px 64px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+header h1{font-family:var(--f-display);font-weight:900;font-size:clamp(26px,4.4vw,38px);letter-spacing:.02em;margin:0;text-wrap:balance}
+header p{color:var(--ink-soft);margin:.4em 0 0;max-width:62ch}
+.tabs{display:flex;gap:8px;flex-wrap:wrap;margin:22px 0 18px}
+.tab{font:700 14px var(--f-display);border:1.5px solid var(--ink);background:transparent;color:var(--ink);padding:8px 14px;border-radius:999px;cursor:pointer}
+.tab[aria-selected="true"]{background:var(--ink);color:var(--paper)}
+.tab:focus-visible,.copy:focus-visible{outline:2px solid var(--red);outline-offset:2px}
+.meta{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 16px}
+.meta span{background:var(--chip);border-radius:6px;padding:3px 10px;font-size:13px}
+.core{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-bottom:26px}
+.core div{border-top:2px solid var(--ink);padding-top:8px;min-width:0}
+.core b{display:block;font:700 12px var(--f-display);letter-spacing:.08em;color:var(--ink-soft)}
+h2{font-family:var(--f-display);font-weight:900;font-size:20px;margin:34px 0 10px;text-wrap:balance}
+.sheet{background:var(--sheet);border:1.5px solid var(--ink);border-radius:2px}
+.row{display:grid;grid-template-columns:52px minmax(0,var(--fw)) minmax(0,1fr) minmax(0,.8fr) 54px;border-top:1px solid var(--rule)}
+.row:first-child{border-top:0}
+.row>div{padding:10px 12px;min-width:0;border-left:1px solid var(--rule)}
+.row>div:first-child{border-left:0}
+.head{font:700 12px var(--f-display);letter-spacing:.1em;color:var(--ink-soft);background:var(--chip)}
+.head>div{padding-block:6px}
+.no{font:900 22px var(--f-display);text-align:center}
+.sec{font:500 18px var(--f-mono);text-align:center;font-variant-numeric:tabular-nums}
+.sec small{display:block;font-size:11px;color:var(--ink-soft)}
+.frame{border:1.5px solid var(--ink);background:var(--sheet);display:block;width:100%;height:auto}
+.shot{font:700 12px var(--f-display);color:var(--red);letter-spacing:.04em}
+.cell p{margin:0 0 4px}
+.cap{display:inline-block;margin-top:4px;border:1px dashed var(--ink-soft);padding:1px 8px;font-size:13px}
+.aim{color:var(--ink-soft);font-size:13px}
+.sk{fill:none;stroke:var(--ink);stroke-width:1.3;stroke-linecap:round;stroke-linejoin:round}
+.sk .cam{stroke:var(--red);stroke-width:1.6}
+.sk .camf{fill:var(--red);stroke:none}
+.sk .ind{stroke:var(--indigo);stroke-width:1.8}
+.sk .lt{fill:var(--glow);stroke:none;opacity:.75}
+.sk .cof{fill:var(--coffee);stroke:var(--ink)}
+.sk .hat{stroke:var(--ink-soft);stroke-width:.6;opacity:.55}
+.sk .dash{stroke:var(--ink-soft);stroke-dasharray:3 3;stroke-width:1}
+.sk text{fill:var(--ink-soft);stroke:none;font:500 7px var(--f-body)}
+.sk .camt{fill:var(--red)}
+ul.tips{padding-left:1.2em;margin:0;max-width:70ch}
+ul.tips li{margin-bottom:6px}
+.block{background:var(--sheet);border:1px solid var(--rule);border-radius:6px;margin-bottom:14px}
+.block h3{font:700 15px var(--f-display);margin:0;padding:10px 14px;border-bottom:1px solid var(--rule);display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+.block .ref{padding:8px 14px 0;font-size:13px;color:var(--ink-soft)}
+pre{margin:0;padding:12px 14px;overflow-x:auto;font:400 12px/1.6 var(--f-mono);white-space:pre-wrap;word-break:break-word}
+.copy{font:700 12px var(--f-display);border:1px solid var(--ink);background:transparent;color:var(--ink);border-radius:4px;padding:4px 10px;cursor:pointer}
+.check{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.check div{background:var(--sheet);border:1px solid var(--rule);border-radius:6px;padding:12px 14px;min-width:0}
+.check b{font-family:var(--f-display)}
+.note{font-size:13px;color:var(--ink-soft);margin-top:30px;border-top:1px solid var(--rule);padding-top:12px}
+@media (max-width:720px){
+  .core,.check{grid-template-columns:minmax(0,1fr)}
+  .row.head{display:none}
+  .row{grid-template-columns:44px minmax(0,1fr) 50px;grid-template-areas:"no fr sec" "tx tx tx" "au au au"}
+  .row>div{border-left:0}
+  .row>.no{grid-area:no}.row>.fr{grid-area:fr}.row>.sec{grid-area:sec}
+  .row>.tx{grid-area:tx;padding-top:0}.row>.au{grid-area:au;padding-top:0}
+  .portrait .row>.fr{max-width:170px}
+}
+@media (prefers-reduced-motion:no-preference){.panel{animation:in .25s ease-out}@keyframes in{from{opacity:.6}to{opacity:1}}}
+</style>
+
+<div class="wrap">
+  <header>
+    <h1>絵コンテ見本帳</h1>
+    <p>絵コンテ監督（AI）が作った見本2本です。白黒の線画は「どんな画にするか」の設計図で、<span style="color:var(--red)">赤い線</span>はカメラの動きです。本番の映像は、下の「Omniに貼る指示文」をKlingに貼って作ります。</p>
+  </header>
+  <nav class="tabs" role="tablist" aria-label="見本の切り替え">
+    <button class="tab" role="tab" id="tab-kenshu" data-id="kenshu">① 研修の紹介動画（30秒・横長）</button>
+    <button class="tab" role="tab" id="tab-shopee" data-id="shopee">② Shopee商品動画（15秒・縦長）</button>
+  </nav>
+  <main id="panel"></main>
+  <p class="note">生成はまだしていません（クレジット未使用）。元の絵コンテは「13_動画制作／作品」の中にあります。中国語の文言・商品仕様・Omniの細かい上限は［要確認］です。</p>
+</div>
+
+<script>
+const A=(x1,y1,x2,y2)=>{const a=Math.atan2(y2-y1,x2-x1),h=4.5;return `<line class="cam" x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}"/><path class="camf" d="M${x2} ${y2}L${x2-h*Math.cos(a-.45)} ${y2-h*Math.sin(a-.45)}L${x2-h*Math.cos(a+.45)} ${y2-h*Math.sin(a+.45)}Z"/>`};
+const dolly=(w,h)=>A(6,6,18,14)+A(w-6,6,w-18,14)+A(6,h-6,18,h-14)+A(w-6,h-6,w-18,h-14)+`<text class="camt" x="${w/2}" y="${h-4}" text-anchor="middle">ゆっくり寄る</text>`;
+const hatch=(w,h)=>{let s='';for(let i=-h;i<w;i+=6)s+=`<line class="hat" x1="${i}" y1="${h}" x2="${i+h}" y2="0"/>`;return s};
+const room=`<rect x="34" y="14" width="92" height="44"/><line x1="0" y1="90" x2="34" y2="58"/><line x1="160" y1="90" x2="126" y2="58"/><line x1="0" y1="0" x2="34" y2="14"/><line x1="160" y1="0" x2="126" y2="14"/><path d="M8 10L26 17V52L8 66Z"/><line x1="17" y1="13" x2="17" y2="59"/><rect x="100" y="20" width="20" height="30"/><line x1="100" y1="30" x2="120" y2="30"/><line x1="100" y1="40" x2="120" y2="40"/><path d="M62 62H98L102 72H58Z"/><line x1="60" y1="72" x2="60" y2="82"/><line x1="100" y1="72" x2="100" y2="82"/>`;
+const svg=(w,h,body)=>`<svg class="frame sk" viewBox="0 0 ${w} ${h}" role="img" aria-hidden="true">${body}</svg>`;
+const mugSide=(cx,top,w,h)=>{const l=cx-w/2,r=cx+w/2;return `<ellipse cx="${cx}" cy="${top}" rx="${w/2}" ry="${w*.12}"/><path d="M${l} ${top}L${l+2} ${top+h}Q${cx} ${top+h+w*.14} ${r-2} ${top+h}L${r} ${top}"/><path d="M${r-1} ${top+h*.2}C${r+w*.38} ${top+h*.15} ${r+w*.38} ${top+h*.8} ${r-1} ${top+h*.72}"/><path class="ind" d="M${l+2} ${top+h*.35}q${w/6} -4 ${w/3} 0t${w/3} 0t${w/3-4} 0"/><path class="ind" d="M${l+2} ${top+h*.55}q${w/6} -4 ${w/3} 0t${w/3} 0t${w/3-4} 0"/><path class="ind" d="M${l+3} ${top+h*.75}q${w/6} -4 ${w/3} 0t${w/3} 0t${w/3-5} 0"/>`};
+
+const S={
+kenshu:{
+  aspect:[160,90],fw:'240px',
+  meta:['30秒','横長 16:9','8カット','Omni 2ブロック','生成 4回＋参照画像 4枚'],
+  core:[['伝えること','社長ひとりで抱えていた仕事は、社員がAIを使えるようになれば手放せる'],['最初の2秒','夜の机で、スマホの通知が何度も光る'],['最後に残す一言','AIを使える社員が、社長の時間をつくる。']],
+  cuts:[
+    {s:3,size:'極寄り・固定',what:'散らかった机の上で、スマホの画面が何度も光る',snd:'通知音が重なる',cap:'',aim:'つかみ。「夜も休めない」を一瞬で',sk:svg(160,90,`<rect x="18" y="26" width="42" height="28" transform="rotate(-8 39 40)"/><rect x="100" y="18" width="40" height="30" transform="rotate(7 120 33)"/><rect x="24" y="62" width="14" height="12" transform="rotate(12 31 68)"/><rect x="126" y="58" width="14" height="12" transform="rotate(-10 133 64)"/><rect class="lt" x="58" y="36" width="44" height="26" rx="3"/><rect x="58" y="36" width="44" height="26" rx="3"/><line x1="80" y1="30" x2="80" y2="22"/><line x1="108" y1="40" x2="116" y2="36"/><line x1="52" y1="40" x2="44" y2="36"/><line x1="108" y1="58" x2="116" y2="62"/><line x1="52" y1="58" x2="44" y2="62"/>${hatch(160,90)}`)},
+    {s:4,size:'中くらい',what:'社長がこめかみを押さえて、うつむく',snd:'低い持続音のBGM',cap:'夜まで、全部ひとりで。',aim:'疲れに共感させる',sk:svg(160,90,`<path class="lt" d="M128 10L112 70H150Z"/><line x1="130" y1="4" x2="130" y2="12"/><circle cx="80" cy="36" r="10"/><path d="M54 74Q56 52 80 50Q104 52 106 74"/><path d="M64 60Q60 42 71 33"/><path d="M96 60Q100 42 89 33"/><line x1="20" y1="74" x2="150" y2="74"/>${hatch(160,90)}${dolly(160,90)}`)},
+    {s:4,size:'寄り・固定',what:'パソコンの青い光に照らされた、疲れた目',snd:'時計の秒針',cap:'',aim:'感情の山場',sk:svg(160,90,`<path d="M22 0Q18 70 60 90M138 0Q142 70 100 90"/><path d="M46 44Q58 37 70 44Q58 50 46 44Z"/><circle cx="58" cy="44" r="3"/><path d="M90 44Q102 37 114 44Q102 50 90 44Z"/><circle cx="102" cy="44" r="3"/><path d="M48 52Q58 55 68 52M92 52Q102 55 112 52"/><path d="M44 34Q58 30 70 35M90 35Q102 30 116 34"/><path d="M80 48V62L75 64"/><line class="cam" x1="0" y1="86" x2="30" y2="70" opacity=".0"/><text x="6" y="84">青い画面の光</text>`)},
+    {s:4,size:'引き・固定',what:'暗いオフィス。スタンドライトの下に社長が一人',snd:'BGMが消える',cap:'社長が止まると、会社が止まる。',aim:'孤独。次のカットと同じ構図にする',sk:svg(160,90,`${room}<path class="lt" d="M76 46L66 62H94L86 46Z"/><line x1="80" y1="40" x2="80" y2="46"/><circle cx="80" cy="56" r="4"/>${hatch(160,90)}`)},
+    {s:4,size:'引き・固定',what:'④と同じ構図の朝。窓から光。社員2人がパソコンを囲む',snd:'明るいピアノが入る',cap:'AIを使える社員がいれば。',aim:'夜→朝の切り替えだけで変化を見せる',sk:svg(160,90,`<path class="lt" d="M8 10L26 17V52L8 66Z"/><path class="lt" d="M26 20L70 62H60L26 40Z" opacity=".4"/>${room}<circle cx="70" cy="44" r="4"/><path d="M64 62Q65 50 70 49Q75 50 76 62"/><circle cx="90" cy="44" r="4"/><path d="M84 62Q85 50 90 49Q95 50 96 62"/><text x="128" y="86" text-anchor="end">④と同じ構図</text>`)},
+    {s:3,size:'寄り・固定',what:'社員Aが画面を見て、うなずいて微笑む',snd:'BGM継続',cap:'',aim:'社員が自分で回せている安心感',sk:svg(160,90,`<path class="lt" d="M0 0H30L0 40Z"/><circle cx="80" cy="44" r="22"/><path d="M58 40Q60 14 80 14Q100 14 102 40L104 66M58 40L56 66"/><path d="M70 42Q73 39 76 42M84 42Q87 39 90 42"/><path d="M72 54Q80 60 88 54"/><path d="M48 90Q52 72 80 70Q108 72 112 90"/>`)},
+    {s:4,size:'中くらい',what:'社長が椅子にもたれ、コーヒーを一口飲む',snd:'BGM継続',cap:'',aim:'社長の時間が戻った',sk:svg(160,90,`<path class="lt" d="M0 0H40L0 50Z"/><line x1="110" y1="20" x2="122" y2="84"/><circle cx="96" cy="30" r="10"/><path d="M70 84Q74 54 100 46Q114 50 116 84"/><path d="M84 62Q76 48 82 38"/><rect x="78" y="30" width="9" height="10" rx="1"/><path d="M80 26q2 -4 0 -8M85 26q2 -4 0 -8"/>${dolly(160,90)}`)},
+    {s:4,size:'引き・止める',what:'朝のオフィス全体。画面の右側を空けておく',snd:'BGMが締まる',cap:'AIを使える社員が、社長の時間をつくる。→ 研修名・問い合わせ先',aim:'締め。文字が乗る「間」',sk:svg(160,90,`<path class="lt" d="M8 10L26 17V52L8 66Z"/><path d="M8 10L26 17V52L8 66Z"/><line x1="0" y1="72" x2="160" y2="72"/><path d="M30 60H70L72 66H28Z"/><circle cx="38" cy="46" r="4"/><path d="M33 60Q34 50 38 50Q42 50 43 60"/><circle cx="52" cy="44" r="4"/><path d="M47 60Q48 49 52 48Q56 49 57 60"/><circle cx="64" cy="46" r="4"/><path d="M59 60Q60 50 64 50Q68 50 69 60"/><rect class="dash" x="90" y="16" width="62" height="46"/><text x="121" y="42" text-anchor="middle">文字が乗る場所</text>`)}
+  ],
+  tips:['④と⑤を<b>まったく同じ構図</b>にして、夜→朝だけを変えます。説明しなくても変化が伝わる、映画でよく使うつなぎ方です。','画の大きさを 極寄り→中→寄り→引き と変え、同じ大きさを続けません。','色と光を前半（青く暗い・スタンドライト1つ）と後半（暖かい朝の窓の光）で分け、各半分の中では全カットそろえます。','文字はすべて編集で入れます。AIに文字を描かせると崩れて安っぽくなるためです。'],
+  blocks:[
+    {t:'ブロック1（夜・問題）15秒・4カット',ref:'参照素材：@Element1＝社長の人物シート、@Image1＝オフィス背景',p:`Shot 1 (3s): extreme close-up, static camera, a smartphone lying on a cluttered wooden desk covered with papers and sticky notes, its screen lights up repeatedly with notifications in a dark room at night. cinematic, photorealistic, cool blue color grade, single warm desk lamp as key light, shallow depth of field, 35mm film look, high detail
+Shot 2 (4s): medium shot, slow dolly in, @Element1 a Japanese businessman in his early 50s, short black hair with some gray, navy suit jacket, white shirt, no tie, sits at the desk and presses his temples with his eyes closed, late at night in @Image1 a small modern Japanese office. cinematic, photorealistic, cool blue color grade, single warm desk lamp as key light, shallow depth of field, 35mm film look, high detail
+Shot 3 (4s): close-up, static camera, the tired eyes of @Element1 a Japanese businessman in his early 50s, short black hair with some gray, looking at a laptop screen, his face lit by cold blue screen light. cinematic, photorealistic, cool blue color grade, single warm desk lamp as key light, shallow depth of field, 35mm film look, high detail
+Shot 4 (4s): wide shot, static camera, @Image1 a small modern Japanese office with wooden desks, large windows on the left, bookshelves in the back, completely dark except one desk lamp, @Element1 sits alone at the center desk, motionless. cinematic, photorealistic, cool blue color grade, single warm desk lamp as key light, shallow depth of field, 35mm film look, high detail`},
+    {t:'ブロック2（朝・解決）15秒・4カット',ref:'参照素材：@Element1＝社長、@Element2＝社員A、@Element3＝社員B、@Image1＝オフィス背景',p:`Shot 1 (4s): wide shot, static camera, exactly the same framing as a wide view of @Image1 a small modern Japanese office with wooden desks, large windows on the left, bookshelves in the back, now bright morning, @Element2 a Japanese woman in her late 20s, shoulder-length black hair, light gray cardigan, and @Element3 a Japanese man in his 30s, short hair, white button-down shirt with rolled sleeves, stand together looking at one laptop on the center desk. cinematic, photorealistic, warm morning sunlight through large windows, soft natural light, shallow depth of field, 35mm film look, high detail
+Shot 2 (3s): close-up, static camera, @Element2 a Japanese woman in her late 20s, shoulder-length black hair, light gray cardigan, looks at the laptop screen, nods and smiles calmly. cinematic, photorealistic, warm morning sunlight through large windows, soft natural light, shallow depth of field, 35mm film look, high detail
+Shot 3 (4s): medium shot, slow dolly in, @Element1 a Japanese businessman in his early 50s, short black hair with some gray, navy suit jacket, white shirt, no tie, leans back in his chair and takes a sip of coffee with a relaxed expression. cinematic, photorealistic, warm morning sunlight through large windows, soft natural light, shallow depth of field, 35mm film look, high detail
+Shot 4 (4s): wide shot, static camera, no movement, @Image1 the bright office in morning light, the three people in the left half of the frame, the right half of the frame is empty clean wall space. cinematic, photorealistic, warm morning sunlight through large windows, soft natural light, shallow depth of field, 35mm film look, high detail`}
+  ],
+  neg:'text, letters, subtitles, watermark, logo, distorted hands, extra fingers, distorted face, morphing, flicker, low quality, cartoon',
+  ask:[['確認してほしいこと','最後に「助成金を活用できる」と入れるかどうか（入れるなら条件を正確に）'],['判断ラベル','【高】AIの新規問い合わせにつながる／【コンテンツ資産化】説明会・提案で何度も使える']]
+},
+shopee:{
+  aspect:[90,160],fw:'130px',portrait:true,
+  meta:['15秒','縦長 9:16','4カット','Omni 1ブロック','生成 5回（多くて8回）'],
+  core:[['伝えること','毎朝の一杯が少し特別になる、日本の上質な器'],['最初の2秒','藍色の線の上を、朝の光がすっと横切る'],['最後に残す一言','讓每個早晨，多一份講究。（毎朝に、ひとつ上のこだわりを）']],
+  cuts:[
+    {s:3,size:'極寄り・固定',what:'白い器の藍色の線。朝の光の帯が左から右へ横切り、表面がきらりと光る',snd:'小鳥の声・ごく小さな環境音',cap:'',aim:'つかみ。質感で「良い物だ」と感じさせる',sk:svg(90,160,`<path d="M0 22Q45 8 90 22"/><path class="lt" d="M18 18L40 14L52 160H26Z"/><path class="ind" d="M0 64q11 -8 22 0t22 0t22 0t24 0"/><path class="ind" d="M0 94q11 -8 22 0t22 0t22 0t24 0"/><path class="ind" d="M0 124q11 -8 22 0t22 0t22 0t24 0"/>${A(14,146,72,146)}<text class="camt" x="45" y="140" text-anchor="middle">光が左→右へ</text>`)},
+    {s:4,size:'中くらい',what:'テーブルの中央に空のマグが1つ。回り込むと持ち手が右に見えてくる',snd:'静かなピアノが入る',cap:'日本製｜手繪風格',aim:'形と模様の全体を見せる',sk:svg(90,160,`<line x1="0" y1="112" x2="90" y2="112"/>${mugSide(42,70,32,38)}<path class="cam" d="M12 124Q45 146 78 124"/><path class="camf" d="M78 124L71 125L74 130Z"/><text class="camt" x="45" y="152" text-anchor="middle">左→右に回り込む</text>`)},
+    {s:4,size:'寄り・少し上から',what:'コーヒーが入ったマグ。表面は止まったまま、細い湯気がのぼる',snd:'ピアノ継続',cap:'容量約300ml｜可微波爐使用',aim:'「自分の朝」に置き換えさせる',sk:svg(90,160,`<ellipse cx="42" cy="78" rx="30" ry="12"/><ellipse class="cof" cx="42" cy="79" rx="25" ry="9"/><path d="M12 78L15 132Q42 142 69 132L72 78"/><path d="M71 90C88 90 88 118 70 116"/><path class="ind" d="M15 104q9 -5 18 0t18 0t18 0"/><path d="M34 64q-5 -10 0 -20t0 -20M48 62q5 -10 0 -18t0 -18"/><line x1="0" y1="150" x2="90" y2="150"/>`)},
+    {s:4,size:'引き・止める',what:'朝の和室のテーブルにマグ。上側は文字のための余白',snd:'ピアノが静かに終わる',cap:'讓每個早晨，多一份講究。→ 加入購物車',aim:'締め。文字の「間」を4秒残す',sk:svg(90,160,`<rect class="lt" x="0" y="20" width="18" height="96"/><rect x="0" y="20" width="18" height="96"/><line x1="9" y1="20" x2="9" y2="116"/><line x1="0" y1="44" x2="18" y2="44"/><line x1="0" y1="68" x2="18" y2="68"/><line x1="0" y1="92" x2="18" y2="92"/><line x1="0" y1="124" x2="90" y2="124"/><line x1="0" y1="132" x2="90" y2="132"/>${mugSide(48,106,14,16)}<rect class="dash" x="24" y="44" width="58" height="40"/><text x="53" y="66" text-anchor="middle">文字の場所</text><rect class="cam" x="1" y="35" width="88" height="90" stroke-dasharray="2 3" opacity=".7"/><text class="camt" x="45" y="146" text-anchor="middle">正方形に切っても収まる</text>`)}
+  ],
+  tips:['カメラはほとんど動かさず、<b>光を動かして</b>質感を見せます。器の高級感は、表面がどう光るかで決まるためです。','光の向きも動きの向きも、全カット<b>左から右</b>にそろえます。持ち手は②以降ずっと右。目が迷わず、つなぎ目が気になりません。','マグと文字を画面の<b>中央の正方形</b>に収めます。商品ページで正方形に切られても崩れません。','コーヒーを<b>注ぐ場面は入れません</b>。液体はAIがいちばん崩しやすく、手も映るためです。注ぎ終わった静かなコーヒーと湯気だけにしています。','避けるものに「持ち手が2つ（two handles）」を入れています。回り込むときにAIがよく起こす失敗です。'],
+  blocks:[
+    {t:'ブロック1　15秒・4カット',ref:'参照素材：@Element1＝マグの商品画像（正面・持ち手側の2枚）、@Image1＝朝の和室の背景',p:`Shot 1 (3s): extreme close-up, static camera, the indigo brush lines on the glossy white glaze of @Element1 a Japanese porcelain mug in Arita-ware style, glossy pure white glaze, thin hand-painted-style indigo blue brush lines flowing in three loose horizontal waves around the body, simple slightly tapered cylinder shape, one rounded handle, about 300ml, no logo, no text, a soft band of morning sunlight slowly slides across the curved surface from left to right and the glaze gently glints, subject centered in the frame, background of @Image1 softly blurred. photorealistic premium product cinematography, soft early morning sunlight from the left through shoji paper, warm neutral color grade, airy whites with deep indigo accents, generous empty negative space, calm and minimal, shallow depth of field, 50mm lens look, high detail
+Shot 2 (4s): medium shot, slow 30-degree orbit from left to right, @Element1 a Japanese porcelain mug in Arita-ware style, glossy pure white glaze, thin hand-painted-style indigo blue brush lines flowing in three loose horizontal waves around the body, simple slightly tapered cylinder shape, one rounded handle, about 300ml, no logo, no text, standing empty and alone at the center of the table, the handle turns into view on the right side, subject centered in the frame, in @Image1 a quiet minimal Japanese room in early morning, a light natural hinoki wood table, a white shoji paper window on the left, soft beige plaster wall behind. photorealistic premium product cinematography, soft early morning sunlight from the left through shoji paper, warm neutral color grade, airy whites with deep indigo accents, generous empty negative space, calm and minimal, shallow depth of field, 50mm lens look, high detail
+Shot 3 (4s): close-up, static camera, slightly high angle, @Element1 a Japanese porcelain mug in Arita-ware style, glossy pure white glaze, thin hand-painted-style indigo blue brush lines flowing in three loose horizontal waves around the body, simple slightly tapered cylinder shape, one rounded handle, about 300ml, no logo, no text, now filled with hot black coffee, the coffee surface stays completely still, thin wisps of steam rise slowly, the handle on the right side, subject centered in the frame, on the table of @Image1 a quiet minimal Japanese room in early morning, a light natural hinoki wood table, a white shoji paper window on the left, soft beige plaster wall behind. photorealistic premium product cinematography, soft early morning sunlight from the left through shoji paper, warm neutral color grade, airy whites with deep indigo accents, generous empty negative space, calm and minimal, shallow depth of field, 50mm lens look, high detail
+Shot 4 (4s): wide shot, static camera, no camera movement, @Element1 a Japanese porcelain mug in Arita-ware style, glossy pure white glaze, thin hand-painted-style indigo blue brush lines flowing in three loose horizontal waves around the body, simple slightly tapered cylinder shape, one rounded handle, about 300ml, no logo, no text, filled with coffee, the handle on the right side, placed slightly below the vertical center of the frame on the table, the area above the mug is empty soft beige plaster wall lit by shoji light, the scene is almost completely still with only a very faint wisp of steam, in @Image1 a quiet minimal Japanese room in early morning, a light natural hinoki wood table, a white shoji paper window on the left, soft beige plaster wall behind. photorealistic premium product cinematography, soft early morning sunlight from the left through shoji paper, warm neutral color grade, airy whites with deep indigo accents, generous empty negative space, calm and minimal, shallow depth of field, 50mm lens look, high detail`}
+  ],
+  neg:'text, letters, subtitles, watermark, logo, brand name, distorted hands, extra fingers, hands, people, pouring, splashing liquid, spilled coffee, two handles, deformed mug, warped pattern, morphing, flicker, low quality, cartoon',
+  ask:[['要本人判断','台湾アカウントは今「稼働していない」。台湾向けで使うと、今期やらない「新しい販売先への広げ」に当たるおそれ。稼働中のSG・MY・PH向けなら文字の言語を替えるだけで使えます'],['要本人判断','「有田焼」は、本物でない限り文字に出さない。「手描き」も本物でなければ「手描き風」と書く'],['要確認','日本製・電子レンジ対応・約300mlは実物の仕様で確認。中国語は台湾の方に見てもらう']]
+}};
+
+const esc=s=>s.replace(/&/g,'&amp;').replace(/</g,'&lt;');
+function render(id){
+  const d=S[id];
+  document.querySelectorAll('.tab').forEach(t=>t.setAttribute('aria-selected',t.dataset.id===id));
+  let total=0;
+  const rows=d.cuts.map((c,i)=>{const st=total;total+=c.s;return `<div class="row">
+    <div class="no">${i+1}</div>
+    <div class="fr">${c.sk}</div>
+    <div class="tx cell"><div class="shot">${c.size}</div><p>${c.what}</p><p class="aim">ねらい：${c.aim}</p></div>
+    <div class="au cell"><p>♪ ${c.snd}</p>${c.cap?`<span class="cap">${c.cap}</span>`:'<span class="aim">文字なし</span>'}</div>
+    <div class="sec">${c.s}<small>${st}〜${total}秒</small></div></div>`}).join('');
+  document.getElementById('panel').innerHTML=`<div class="panel ${d.portrait?'portrait':''}">
+    <div class="meta">${d.meta.map(m=>`<span>${m}</span>`).join('')}</div>
+    <div class="core">${d.core.map(([k,v])=>`<div><b>${k}</b>${v}</div>`).join('')}</div>
+    <h2>絵コンテ</h2>
+    <div class="sheet" style="--fw:${d.fw}">
+      <div class="row head"><div>カット</div><div>画面</div><div>内容</div><div>音・文字（編集で入れる）</div><div>秒</div></div>${rows}
+    </div>
+    <h2>プロに見せる工夫</h2><ul class="tips">${d.tips.map(t=>`<li>${t}</li>`).join('')}</ul>
+    <h2>Omniに貼る指示文</h2>
+    ${d.blocks.map((b,i)=>`<div class="block"><h3>${b.t}<button class="copy" data-k="p${i}">コピー</button></h3><div class="ref">${b.ref}</div><pre id="${id}-p${i}">${esc(b.p)}</pre></div>`).join('')}
+    <div class="block"><h3>避けるもの（全ブロック共通）<button class="copy" data-k="neg">コピー</button></h3><pre id="${id}-neg">${esc(d.neg)}</pre></div>
+    <h2>本間さんに見てほしいこと</h2>
+    <div class="check">${d.ask.map(([k,v])=>`<div><b>${k}</b><br>${v}</div>`).join('')}</div></div>`;
+  document.querySelectorAll('.copy').forEach(b=>b.onclick=()=>{
+    const el=document.getElementById(id+'-'+b.dataset.k);
+    const done=()=>{b.textContent='コピーしました';setTimeout(()=>b.textContent='コピー',1600)};
+    const sel=()=>{const r=document.createRange();r.selectNodeContents(el);const s=getSelection();s.removeAllRanges();s.addRange(r);b.textContent='選択しました';};
+    try{navigator.clipboard.writeText(el.textContent).then(done,sel)}catch(e){sel()}
+  });
+}
+function route(){const h=location.hash.slice(1);render(S[h]?h:'kenshu')}
+document.querySelectorAll('.tab').forEach(t=>t.onclick=()=>{location.hash=t.dataset.id});
+addEventListener('hashchange',route);route();
+</script>
